@@ -5,8 +5,31 @@ import "./index.css";
 import "flowbite";
 import * as React from "react";
 import ReactDOM from "react-dom/client";
+import { RangeSlider } from "flowbite-react";
+
+type State = {
+  inputs: Array<number>;
+  weights: Array<number>;
+  outputs: Array<number>;
+};
+
+function initArray(n: number, init: number = 0) {
+  let a = [];
+  for (let i = 0; i < n; i++) {
+    a.push(init);
+  }
+  return a;
+}
+
+const MIN_RANGE = 0;
+const MAX_RANGE = 100;
 
 export default function Example() {
+  const [state, setState] = React.useState<State>({
+    inputs: initArray(1),
+    weights: initArray(1),
+    outputs: initArray(1),
+  });
   return (
     <div className="bg-white py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -18,8 +41,20 @@ export default function Example() {
             To LLMs that can pass the bar exam, to Reenforcement Learning
             alogrithms that can play video games, the foundational concept in
             all these are the perceptron.
+            {state.inputs[0]}
           </p>
         </div>
+        <RangeSlider
+          min={MIN_RANGE}
+          max={MAX_RANGE}
+          value={state.inputs[0]}
+          onChange={(event) => {
+            let value = Number(event?.target.value);
+            let inputs = [...state.inputs];
+            inputs[0] = value;
+            setState({ ...state, inputs });
+          }}
+        />
         <div className="mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3">
             <g fill="#61DAFB">
