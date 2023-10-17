@@ -30,7 +30,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "GH Site Teample",
+      title: "How A Perceptron Works",
       template: "src/index.html",
     }),
   ],

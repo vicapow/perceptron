@@ -1,6 +1,6 @@
 {
-  "url": "git+https://github.com/vicapow/gh-site-template.git",
-  "homepage": "http://vicapow.github.io/gh-site-template",
+  "url": "git+https://github.com/vicapow/perceptron.git",
+  "homepage": "http://vicapow.github.io/perceptron",
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
