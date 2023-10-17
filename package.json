@@ -4,7 +4,10 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "autoprefixer": "^10.4.16",
     "css-loader": "^6.8.1",
+    "flowbite": "^1.8.1",
+    "flowbite-react": "^0.6.4",
     "gh-pages": "^6.0.0",
     "html-webpack-plugin": "^5.5.3",
     "postcss-loader": "^7.3.3",

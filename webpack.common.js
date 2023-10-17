@@ -34,6 +34,12 @@ module.exports = {
       template: "src/index.html",
     }),
   ],
+  ignoreWarnings: [
+    {
+      module:
+        /.\/node_modules\/css-loader\/dist\/cjs.js!.\/node_modules\/postcss-loader\/dist\/cjs.js!.\/src\/index.css/,
+    },
+  ],
   resolve: {
     extensions: [".js", ".ts", ".tsx"],
   },
