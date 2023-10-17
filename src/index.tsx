@@ -2,6 +2,7 @@
 window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = { isDisabled: true };
 
 import "./index.css";
+import "flowbite";
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 
