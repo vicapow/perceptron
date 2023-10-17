@@ -1,8 +1,12 @@
 {
+  "url": "git+https://github.com/vicapow/gh-site-template.git",
+  "homepage": "http://vicapow.github.io/gh-site-template",
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
     "css-loader": "^6.8.1",
+    "gh-pages": "^6.0.0",
+    "html-webpack-plugin": "^5.5.3",
     "postcss-loader": "^7.3.3",
     "postcss-preset-env": "^9.2.0",
     "prettier": "3.0.3",
@@ -19,7 +23,9 @@
   "main": "src/index.tsx",
   "scripts": {
     "start": "webpack serve --config=webpack.dev.js --watch --open",
-    "build": "export NODE_ENV=production && webpack"
+    "build": "rm -rf dist && export NODE_ENV=production && webpack --config=webpack.prod.js",
+    "predeploy": "yarn run build",
+    "deploy": "yarn build && gh-pages -d dist"
   },
   "devDependencies": {
     "@types/react": "^18.2.28",
