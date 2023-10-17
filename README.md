@@ -1,7 +1,15 @@
-## Recompile CSS
+## A template project setup
 
-yarn tailwindcss -i ./src/index.css -o ./dist/index.css
+This is my preferred project setup. It includes React with JSX, TypeScript, Prettier, and TailwindCSS.
 
-## Recompile JS
+## Setup
 
-yarn webpack --config=webpack.dev
+First, install dependencies using
+
+    yarn install
+
+## Start the server
+
+Start the server so that any changes to JavaScript or CSS files will be automatically re-compiled. This also sets up an HTTP server to serve the site at https://localhost:8080
+
+    yarn start
