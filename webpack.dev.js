@@ -10,5 +10,8 @@ module.exports = merge(common, {
       directory: path.join(process.cwd(), "/"),
       serveIndex: true,
     },
+    devMiddleware: {
+      writeToDisk: true,
+    },
   },
 });
