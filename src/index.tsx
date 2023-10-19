@@ -5,31 +5,216 @@ import "./index.css";
 import "flowbite";
 import * as React from "react";
 import ReactDOM from "react-dom/client";
-import { RangeSlider } from "flowbite-react";
+// import { RangeSlider } from "flowbite-react";
+import { interpolateBezier, Point } from "./bezier";
+import { EditableNode } from "./EditableNode";
 
-type State = {
-  inputs: Array<number>;
-  weights: Array<number>;
-  outputs: Array<number>;
+type NetworkState = {
+  inputs: Array<{ value: number; editable: boolean }>;
+  weights: Array<{ value: number; editable: boolean }>;
+  outputs: Array<{ editable: boolean }>;
 };
 
-function initArray(n: number, init: number = 0) {
-  let a = [];
-  for (let i = 0; i < n; i++) {
-    a.push(init);
+function networkOutput(network: NetworkState) {
+  let outputValue = 0;
+  for (let i = 0; i < network.inputs.length; i++) {
+    const input = network.inputs[i]!.value;
+    outputValue = outputValue + input * network.weights[i]!.value;
   }
-  return a;
+  return outputValue;
 }
 
-const MIN_RANGE = 0;
-const MAX_RANGE = 100;
+function Perceptron({
+  network,
+  onChangeNetwork,
+}: {
+  network: NetworkState;
+  onChangeNetwork: (network: NetworkState) => void;
+}) {
+  const [width, height] = [400, 200];
+  const rInputs = Math.min(
+    (height / (network.inputs.length + 1) / 2) * 0.5,
+    20,
+  );
+  const rOutputs = Math.min(
+    (height / (network.outputs.length + 1) / 2) * 0.5,
+    20,
+  );
+
+  const inputs = network.inputs.map((input, index) => ({
+    x: 100,
+    y: (height / (network.inputs.length + 1)) * (index + 1),
+    r: rInputs,
+    value: input.value,
+    editable: input.editable,
+  }));
+
+  const outputs = network.outputs.map((_, index) => ({
+    x: width - 100,
+    y: (height / (network.outputs.length + 1)) * (index + 1),
+    r: rOutputs,
+  }));
+
+  const pCO = 100;
+
+  const pathControls: Array<{ p1: Point; p2: Point; p3: Point; p4: Point }> =
+    inputs.map((input) => {
+      return {
+        p1: [input.x, input.y],
+        p2: [input.x + pCO, input.y],
+        p3: [outputs[0]!.x - pCO, outputs[0]!.y],
+        p4: [outputs[0]!.x, outputs[0]!.y],
+      };
+    });
+
+  const weights = network.weights.map((weight, index) => {
+    const path = pathControls[index]!;
+    const point = interpolateBezier(path.p1, path.p2, path.p3, path.p4, 0.3);
+    return { loc: point, value: weight.value, editable: weight.editable };
+  });
+
+  let outputValue = networkOutput(network);
+
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} ${height}`}>
+      <rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        fill="rgba(0, 0, 0, 0.02)"
+      />
+      {pathControls.map((path, index) => {
+        const p1 = path.p1.join(" ");
+        const p2 = path.p2.join(" ");
+        const p3 = path.p3.join(" ");
+        const p4 = path.p4.join(" ");
+        return (
+          <path
+            key={index}
+            d={`M ${p1} C ${p2}, ${p3}, ${p4}`}
+            className="stroke-sky-500"
+            fill="transparent"
+          />
+        );
+      })}
+      {inputs.map(({ x, y, r, value, editable }, index) => (
+        <EditableNode
+          editable={editable}
+          cx={x}
+          cy={y}
+          r={r}
+          minValue={0}
+          maxValue={1}
+          fontSize={r * 0.9}
+          className="fill-sky-100 stroke-sky-500"
+          textClassName="fill-sky-300"
+          key={index}
+          value={value}
+          onChange={({ value }) => {
+            const inputs = [...network.inputs];
+            inputs[index] = { ...inputs[index]!, value: value };
+            onChangeNetwork({ ...network, inputs });
+          }}
+        />
+      ))}
+      {weights.map(({ loc, value, editable }, index) => {
+        return (
+          <EditableNode
+            editable={editable}
+            cx={loc[0]}
+            cy={loc[1]}
+            r={rInputs}
+            minValue={-100}
+            maxValue={100}
+            fontSize={rInputs * 0.9}
+            className="fill-amber-200 stroke-amber-400"
+            textClassName="fill-amber-400"
+            key={index}
+            value={value}
+            onChange={({ value }) => {
+              const weights = [...network.weights];
+              weights[index] = { ...weights[index]!, value };
+              onChangeNetwork({ ...network, weights });
+            }}
+          />
+        );
+      })}
+      {outputs.map(({ x, y, r }, index) => {
+        let fontSize = 15;
+        return (
+          <g transform={`translate(${x},${y})`}>
+            <circle
+              key={index}
+              r={r}
+              className="fill-pink-500 stroke-pink-200"
+            />
+            <text
+              y={fontSize * 0.4}
+              fontSize={15}
+              className="fill-pink-200"
+              style={{ pointerEvents: "none", userSelect: "none" }}
+              textAnchor="middle"
+            >
+              {Math.round(outputValue * 100) / 100}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function AndGatePerceptron() {
+  const [network, setNetwork] = React.useState<NetworkState>({
+    inputs: [
+      { value: 0, editable: true },
+      { value: 0, editable: true },
+      { value: 1, editable: false },
+    ],
+    weights: [
+      { value: 1, editable: false },
+      { value: 1, editable: false },
+      { value: -1, editable: false },
+    ],
+    outputs: [{ editable: false }],
+  });
+  return <Perceptron network={network} onChangeNetwork={setNetwork} />;
+}
+
+function OrGatePerceptron() {
+  const [network, setNetwork] = React.useState<NetworkState>({
+    inputs: [
+      { value: 0, editable: true },
+      { value: 0, editable: true },
+      { value: 1, editable: false },
+    ],
+    weights: [
+      { value: 2, editable: false },
+      { value: 2, editable: false },
+      { value: -1, editable: false },
+    ],
+    outputs: [{ editable: false }],
+  });
+  return <Perceptron network={network} onChangeNetwork={setNetwork} />;
+}
+
+function NotGatePerceptron() {
+  const [network, setNetwork] = React.useState<NetworkState>({
+    inputs: [
+      { value: 0, editable: true },
+      { value: 1, editable: false },
+    ],
+    weights: [
+      { value: -1, editable: false },
+      { value: 1, editable: false },
+    ],
+    outputs: [{ editable: false }],
+  });
+  return <Perceptron network={network} onChangeNetwork={setNetwork} />;
+}
 
 export default function Example() {
-  const [state, setState] = React.useState<State>({
-    inputs: initArray(1),
-    weights: initArray(1),
-    outputs: initArray(1),
-  });
   return (
     <div className="bg-white py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -41,28 +226,25 @@ export default function Example() {
             To LLMs that can pass the bar exam, to Reenforcement Learning
             alogrithms that can play video games, the foundational concept in
             all these are the perceptron.
-            {state.inputs[0]}
           </p>
-        </div>
-        <RangeSlider
-          min={MIN_RANGE}
-          max={MAX_RANGE}
-          value={state.inputs[0]}
-          onChange={(event) => {
-            let value = Number(event?.target.value);
-            let inputs = [...state.inputs];
-            inputs[0] = value;
-            setState({ ...state, inputs });
-          }}
-        />
-        <div className="mx-auto">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3">
-            <g fill="#61DAFB">
-              <path d="M666.3 296.5c0-32.5-40.7-63.3-103.1-82.4 14.4-63.6 8-114.2-20.2-130.4-6.5-3.8-14.1-5.6-22.4-5.6v22.3c4.6 0 8.3.9 11.4 2.6 13.6 7.8 19.5 37.5 14.9 75.7-1.1 9.4-2.9 19.3-5.1 29.4-19.6-4.8-41-8.5-63.5-10.9-13.5-18.5-27.5-35.3-41.6-50 32.6-30.3 63.2-46.9 84-46.9V78c-27.5 0-63.5 19.6-99.9 53.6-36.4-33.8-72.4-53.2-99.9-53.2v22.3c20.7 0 51.4 16.5 84 46.6-14 14.7-28 31.4-41.3 49.9-22.6 2.4-44 6.1-63.6 11-2.3-10-4-19.7-5.2-29-4.7-38.2 1.1-67.9 14.6-75.8 3-1.8 6.9-2.6 11.5-2.6V78.5c-8.4 0-16 1.8-22.6 5.6-28.1 16.2-34.4 66.7-19.9 130.1-62.2 19.2-102.7 49.9-102.7 82.3 0 32.5 40.7 63.3 103.1 82.4-14.4 63.6-8 114.2 20.2 130.4 6.5 3.8 14.1 5.6 22.5 5.6 27.5 0 63.5-19.6 99.9-53.6 36.4 33.8 72.4 53.2 99.9 53.2 8.4 0 16-1.8 22.6-5.6 28.1-16.2 34.4-66.7 19.9-130.1 62-19.1 102.5-49.9 102.5-82.3zm-130.2-66.7c-3.7 12.9-8.3 26.2-13.5 39.5-4.1-8-8.4-16-13.1-24-4.6-8-9.5-15.8-14.4-23.4 14.2 2.1 27.9 4.7 41 7.9zm-45.8 106.5c-7.8 13.5-15.8 26.3-24.1 38.2-14.9 1.3-30 2-45.2 2-15.1 0-30.2-.7-45-1.9-8.3-11.9-16.4-24.6-24.2-38-7.6-13.1-14.5-26.4-20.8-39.8 6.2-13.4 13.2-26.8 20.7-39.9 7.8-13.5 15.8-26.3 24.1-38.2 14.9-1.3 30-2 45.2-2 15.1 0 30.2.7 45 1.9 8.3 11.9 16.4 24.6 24.2 38 7.6 13.1 14.5 26.4 20.8 39.8-6.3 13.4-13.2 26.8-20.7 39.9zm32.3-13c5.4 13.4 10 26.8 13.8 39.8-13.1 3.2-26.9 5.9-41.2 8 4.9-7.7 9.8-15.6 14.4-23.7 4.6-8 8.9-16.1 13-24.1zM421.2 430c-9.3-9.6-18.6-20.3-27.8-32 9 .4 18.2.7 27.5.7 9.4 0 18.7-.2 27.8-.7-9 11.7-18.3 22.4-27.5 32zm-74.4-58.9c-14.2-2.1-27.9-4.7-41-7.9 3.7-12.9 8.3-26.2 13.5-39.5 4.1 8 8.4 16 13.1 24 4.7 8 9.5 15.8 14.4 23.4zM420.7 163c9.3 9.6 18.6 20.3 27.8 32-9-.4-18.2-.7-27.5-.7-9.4 0-18.7.2-27.8.7 9-11.7 18.3-22.4 27.5-32zm-74 58.9c-4.9 7.7-9.8 15.6-14.4 23.7-4.6 8-8.9 16-13 24-5.4-13.4-10-26.8-13.8-39.8 13.1-3.1 26.9-5.8 41.2-7.9zm-90.5 125.2c-35.4-15.1-58.3-34.9-58.3-50.6 0-15.7 22.9-35.6 58.3-50.6 8.6-3.7 18-7 27.7-10.1 5.7 19.6 13.2 40 22.5 60.9-9.2 20.8-16.6 41.1-22.2 60.6-9.9-3.1-19.3-6.5-28-10.2zM310 490c-13.6-7.8-19.5-37.5-14.9-75.7 1.1-9.4 2.9-19.3 5.1-29.4 19.6 4.8 41 8.5 63.5 10.9 13.5 18.5 27.5 35.3 41.6 50-32.6 30.3-63.2 46.9-84 46.9-4.5-.1-8.3-1-11.3-2.7zm237.2-76.2c4.7 38.2-1.1 67.9-14.6 75.8-3 1.8-6.9 2.6-11.5 2.6-20.7 0-51.4-16.5-84-46.6 14-14.7 28-31.4 41.3-49.9 22.6-2.4 44-6.1 63.6-11 2.3 10.1 4.1 19.8 5.2 29.1zm38.5-66.7c-8.6 3.7-18 7-27.7 10.1-5.7-19.6-13.2-40-22.5-60.9 9.2-20.8 16.6-41.1 22.2-60.6 9.9 3.1 19.3 6.5 28.1 10.2 35.4 15.1 58.3 34.9 58.3 50.6-.1 15.7-23 35.6-58.4 50.6zM320.8 78.4z" />
-              <circle cx="420.9" cy="296.5" r="45.7" />
-              <path d="M520.5 78.1z" />
-            </g>
-          </svg>
+          <div className="mx-auto">
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              This is an AND gate perceptron.
+            </p>
+            <AndGatePerceptron />
+          </div>
+          <div className="mx-auto">
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              This is an OR gate perceptron.
+            </p>
+            <OrGatePerceptron />
+          </div>
+          <div className="mx-auto">
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              The is a NOT gate perceptron.
+            </p>
+            <NotGatePerceptron />
+          </div>
         </div>
       </div>
     </div>
