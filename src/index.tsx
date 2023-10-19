@@ -223,7 +223,7 @@ function NotGatePerceptron() {
     ],
     weights: [
       { value: -1, editable: false },
-      { value: 1, editable: false },
+      { value: 0.5, editable: false },
     ],
     outputs: [{ editable: false }],
   });
