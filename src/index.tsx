@@ -223,9 +223,10 @@ export default function Example() {
             The Perceptron
           </h2>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            To LLMs that can pass the bar exam, to Reenforcement Learning
+            To LLMs that can pass the bar exam, to renforcement learning
             alogrithms that can play video games, the foundational concept in
-            all these are the perceptron.
+            all these are the perceptron, the powerhouse of netural networks.
+            But how do they work?
           </p>
           <div className="mx-auto">
             <p className="mt-6 text-lg leading-8 text-gray-600">
