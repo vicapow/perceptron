@@ -8,6 +8,7 @@ import ReactDOM from "react-dom/client";
 // import { RangeSlider } from "flowbite-react";
 import { interpolateBezier, Point } from "./bezier";
 import { EditableNode } from "./EditableNode";
+import HeavisideActivation from "./HeavisideActivation";
 
 type NetworkState = {
   inputs: Array<{ value: number; editable: boolean }>;
@@ -76,7 +77,7 @@ function Perceptron({
   let outputValue = networkOutput(network);
 
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} ${height}`}>
+    <svg viewBox={`0 0 ${width} ${height}`}>
       <rect
         x={0}
         y={0}
@@ -228,6 +229,11 @@ export default function Example() {
             all these are the perceptron, the powerhouse of netural networks.
             But how do they work?
           </p>
+          <div className="mx-auto">
+            <svg viewBox={`0 0 ${600} ${400}`}>
+              <HeavisideActivation width={600} height={400} />
+            </svg>
+          </div>
           <div className="mx-auto">
             <p className="mt-6 text-lg leading-8 text-gray-600">
               This is an AND gate perceptron.
