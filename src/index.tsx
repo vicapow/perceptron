@@ -8,7 +8,7 @@ import ReactDOM from "react-dom/client";
 // import { RangeSlider } from "flowbite-react";
 import { interpolateBezier, Point } from "./bezier";
 import { EditableNode } from "./EditableNode";
-import HeavisideActivation from "./HeavisideActivation";
+import HeavisideActivation, { heaviside } from "./HeavisideActivation";
 
 type NetworkState = {
   inputs: Array<{ value: number; editable: boolean }>;
@@ -43,7 +43,7 @@ function Perceptron({
   );
 
   const inputs = network.inputs.map((input, index) => ({
-    x: 100,
+    x: 50,
     y: (height / (network.inputs.length + 1)) * (index + 1),
     r: rInputs,
     value: input.value,
@@ -51,7 +51,7 @@ function Perceptron({
   }));
 
   const outputs = network.outputs.map((_, index) => ({
-    x: width - 100,
+    x: width - 190,
     y: (height / (network.outputs.length + 1)) * (index + 1),
     r: rOutputs,
   }));
@@ -70,7 +70,7 @@ function Perceptron({
 
   const weights = network.weights.map((weight, index) => {
     const path = pathControls[index]!;
-    const point = interpolateBezier(path.p1, path.p2, path.p3, path.p4, 0.3);
+    const point = interpolateBezier(path.p1, path.p2, path.p3, path.p4, 0.4);
     return { loc: point, value: weight.value, editable: weight.editable };
   });
 
@@ -142,17 +142,17 @@ function Perceptron({
         );
       })}
       {outputs.map(({ x, y, r }, index) => {
-        let fontSize = 15;
+        let fontSize = 12;
         return (
-          <g transform={`translate(${x},${y})`}>
+          <g transform={`translate(${x},${y})`} key={index}>
             <circle
               key={index}
-              r={r}
+              r={r * 0.8}
               className="fill-pink-500 stroke-pink-200"
             />
             <text
               y={fontSize * 0.4}
-              fontSize={15}
+              fontSize={fontSize}
               className="fill-pink-200"
               style={{ pointerEvents: "none", userSelect: "none" }}
               textAnchor="middle"
@@ -162,6 +162,21 @@ function Perceptron({
           </g>
         );
       })}
+      <g transform="translate(250, 63)">
+        <HeavisideActivation width={75} height={75} input={outputValue} />
+      </g>
+      <g transform={`translate(360,${height / 2})`}>
+        <circle r={rOutputs * 0.8} className="fill-pink-500 stroke-pink-200" />
+        <text
+          y={15 * 0.4}
+          fontSize={15}
+          className="fill-pink-200"
+          style={{ pointerEvents: "none", userSelect: "none" }}
+          textAnchor="middle"
+        >
+          {Math.round(heaviside(outputValue) * 100) / 100}
+        </text>
+      </g>
     </svg>
   );
 }
@@ -230,25 +245,20 @@ export default function Example() {
             But how do they work?
           </p>
           <div className="mx-auto">
-            <svg viewBox={`0 0 ${600} ${400}`}>
-              <HeavisideActivation width={600} height={400} />
-            </svg>
-          </div>
-          <div className="mx-auto">
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              This is an AND gate perceptron.
+              This is an AND gate perceptron
             </p>
             <AndGatePerceptron />
           </div>
           <div className="mx-auto">
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              This is an OR gate perceptron.
+              This is an OR gate perceptron
             </p>
             <OrGatePerceptron />
           </div>
           <div className="mx-auto">
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              The is a NOT gate perceptron.
+              The is a NOT gate perceptron
             </p>
             <NotGatePerceptron />
           </div>
