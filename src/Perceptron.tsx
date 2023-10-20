@@ -2,14 +2,27 @@ import * as React from "react";
 import { interpolateBezier, Point } from "./bezier";
 import { EditableNode } from "./EditableNode";
 import HeavisideActivation, { heaviside } from "./HeavisideActivation";
+import ClassificationPlot from "./ClassificationPlot";
 
-type NetworkState = {
-  inputs: Array<{ value: number; editable: boolean }>;
-  weights: Array<{ value: number; editable: boolean }>;
+export type NetworkState = {
+  inputs: Array<{ value: number; editable: boolean; label?: string }>;
+  weights: Array<{ value: number; editable: boolean; label?: string }>;
   outputs: Array<{ editable: boolean }>;
 };
 
-function networkOutput(network: NetworkState) {
+export const NOT_GATE_NETWORK = {
+  inputs: [
+    { value: 0, editable: true, label: "X₁" },
+    { value: 1, editable: false, label: "1" },
+  ],
+  weights: [
+    { value: -1, editable: true },
+    { value: 0.5, editable: true },
+  ],
+  outputs: [{ editable: false }],
+};
+
+export function networkOutput(network: NetworkState) {
   let outputValue = 0;
   for (let i = 0; i < network.inputs.length; i++) {
     const input = network.inputs[i]!.value;
@@ -18,16 +31,63 @@ function networkOutput(network: NetworkState) {
   return outputValue;
 }
 
-export function Perceptron({
-  network,
-  onChangeNetwork,
-  content,
-}: {
+export function PerceptronWithExtraContent(props: {
   network: NetworkState;
   onChangeNetwork: (network: NetworkState) => void;
   content?: (width: number, height: number) => React.ReactNode;
+  showTease: boolean;
+  hideTease: () => void;
 }) {
+  const [containerWidth, containerHeight] = [400, 260];
   const [width, height] = [400, 200];
+  return (
+    <svg viewBox={`0 0 ${containerWidth} ${containerHeight}`}>
+      <rect
+        x={0}
+        y={0}
+        width={containerWidth}
+        height={containerHeight}
+        fill="rgba(0, 0, 0, 0.02)"
+      />
+      <g transform={`translate(0, ${containerHeight - height})`}>
+        <Perceptron {...{ ...props, width, height }} />
+      </g>
+      {props.content ? props.content(width, height) : null}
+    </svg>
+  );
+}
+
+export function PerceptronAlone(props: {
+  network: NetworkState;
+  onChangeNetwork: (network: NetworkState) => void;
+  content?: (width: number, height: number) => React.ReactNode;
+  showTease: boolean;
+}) {
+  const [wC, hC] = [400, 160];
+  const [width, height] = [400, 200];
+  return (
+    <svg viewBox={`0 0 ${wC} ${hC}`}>
+      <rect x={0} y={0} width={wC} height={hC} fill="rgba(0, 0, 0, 0.02)" />
+      <g transform={`translate(0, ${hC / 2 - height / 2})`}>
+        <Perceptron {...{ ...props, width, height }} />
+      </g>
+    </svg>
+  );
+}
+
+export function Perceptron({
+  network,
+  onChangeNetwork,
+  showTease,
+  width,
+  height,
+}: {
+  network: NetworkState;
+  onChangeNetwork: (network: NetworkState) => void;
+  showTease: boolean;
+  width: number;
+  height: number;
+}) {
   const rInputs = Math.min(
     (height / (network.inputs.length + 1) / 2) * 0.5,
     20,
@@ -42,6 +102,7 @@ export function Perceptron({
     y: (height / (network.inputs.length + 1)) * (index + 1),
     r: rInputs,
     value: input.value,
+    label: input.label,
     editable: input.editable,
   }));
 
@@ -72,14 +133,7 @@ export function Perceptron({
   let outputValue = networkOutput(network);
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`}>
-      <rect
-        x={0}
-        y={0}
-        width={width}
-        height={height}
-        fill="rgba(0, 0, 0, 0.02)"
-      />
+    <g>
       {pathControls.map((path, index) => {
         const p1 = path.p1.join(" ");
         const p2 = path.p2.join(" ");
@@ -94,9 +148,10 @@ export function Perceptron({
           />
         );
       })}
-      {inputs.map(({ x, y, r, value, editable }, index) => (
+      {inputs.map(({ x, y, r, value, label, editable }, index) => (
         <EditableNode
           editable={editable}
+          showTease={showTease}
           cx={x}
           cy={y}
           r={r}
@@ -106,6 +161,7 @@ export function Perceptron({
           className="fill-sky-100 stroke-sky-500"
           textClassName="fill-sky-300"
           key={index}
+          label={label || ""}
           value={value}
           onChange={({ value }) => {
             const inputs = [...network.inputs];
@@ -133,7 +189,30 @@ export function Perceptron({
               weights[index] = { ...weights[index]!, value };
               onChangeNetwork({ ...network, weights });
             }}
+            showTease={showTease}
           />
+        );
+      })}
+      {weights.map((_, index) => {
+        const path = pathControls[index]!;
+        const point = interpolateBezier(
+          path.p1,
+          path.p2,
+          path.p3,
+          path.p4,
+          0.15,
+        );
+        return (
+          <text
+            key={index}
+            x={point[0]}
+            y={point[1] - 3}
+            textAnchor="middle"
+            fontSize={8}
+            className="fill-gray-400"
+          >
+            ×
+          </text>
         );
       })}
       {outputs.map(({ x, y, r }, index) => {
@@ -161,19 +240,23 @@ export function Perceptron({
         <HeavisideActivation width={75} height={75} input={outputValue} />
       </g>
       <g transform={`translate(360,${height / 2})`}>
-        <circle r={rOutputs * 0.8} className="fill-pink-500 stroke-pink-200" />
+        <circle
+          r={rOutputs * 0.8}
+          className={
+            heaviside(outputValue) >= 1 ? "fill-lime-400" : "fill-orange-400"
+          }
+        />
         <text
           y={15 * 0.4}
           fontSize={15}
-          className="fill-pink-200"
+          fill="white"
           style={{ pointerEvents: "none", userSelect: "none" }}
           textAnchor="middle"
         >
-          {Math.round(heaviside(outputValue) * 100) / 100}
+          {heaviside(outputValue)}
         </text>
       </g>
-      {content ? content(width, height) : null}
-    </svg>
+    </g>
   );
 }
 
@@ -211,34 +294,78 @@ function AndGate(props: {
   );
 }
 
-export function AndGatePerceptron() {
+export function AndGatePerceptron(props: {
+  showTease: boolean;
+  hideTease: () => void;
+}) {
   const [network, setNetwork] = React.useState<NetworkState>({
     inputs: [
-      { value: 0, editable: true },
-      { value: 0, editable: true },
-      { value: 1, editable: false },
+      { value: 0, editable: true, label: "X₁" },
+      { value: 0, editable: true, label: "X₂" },
+      { value: 1, editable: false, label: "1" },
     ],
     weights: [
-      { value: 0.5, editable: false },
-      { value: 0.5, editable: false },
-      { value: 0.8, editable: false },
+      { value: 1, editable: false, label: "W₁" },
+      { value: 1, editable: false, label: "W₂" },
+      { value: -1.5, editable: false, label: "b" },
     ],
     outputs: [{ editable: false }],
   });
   let outputValue = heaviside(networkOutput(network));
   return (
-    <Perceptron
+    <PerceptronWithExtraContent
+      showTease={props.showTease}
+      hideTease={props.hideTease}
       network={network}
       onChangeNetwork={setNetwork}
       content={(width) => {
         return (
-          <g transform={`translate(${width - 90}, ${20})`}>
-            <AndGate
-              size={30}
-              input1={network.inputs[0]!.value}
-              input2={network.inputs[1]!.value}
-              output={outputValue}
-            />
+          <>
+            <g transform={`translate(${width - 180}, ${20})`}>
+              <AndGate
+                size={30}
+                input1={network.inputs[0]!.value}
+                input2={network.inputs[1]!.value}
+                output={outputValue}
+              />
+            </g>
+            <g transform="translate(25, 10)">
+              <ClassificationPlot width={50} height={50} network={network} />
+            </g>
+          </>
+        );
+      }}
+    />
+  );
+}
+
+export function OrGatePerceptron(props: {
+  showTease: boolean;
+  hideTease: () => void;
+}) {
+  const [network, setNetwork] = React.useState<NetworkState>({
+    inputs: [
+      { value: 0, editable: true, label: "X₁" },
+      { value: 0, editable: true, label: "X₂" },
+      { value: 1, editable: false, label: "1" },
+    ],
+    weights: [
+      { value: 2, editable: false },
+      { value: 2, editable: false },
+      { value: -1, editable: false },
+    ],
+    outputs: [{ editable: false }],
+  });
+  return (
+    <PerceptronWithExtraContent
+      network={network}
+      showTease={props.showTease}
+      hideTease={props.hideTease}
+      onChangeNetwork={setNetwork}
+      content={() => {
+        return (
+          <g transform="translate(25, 10)">
+            <ClassificationPlot width={50} height={50} network={network} />
           </g>
         );
       }}
@@ -246,34 +373,29 @@ export function AndGatePerceptron() {
   );
 }
 
-export function OrGatePerceptron() {
-  const [network, setNetwork] = React.useState<NetworkState>({
-    inputs: [
-      { value: 0, editable: true },
-      { value: 0, editable: true },
-      { value: 1, editable: false },
-    ],
-    weights: [
-      { value: 2, editable: false },
-      { value: 2, editable: false },
-      { value: -1, editable: false },
-    ],
-    outputs: [{ editable: false }],
-  });
-  return <Perceptron network={network} onChangeNetwork={setNetwork} />;
-}
-
-export function NotGatePerceptron() {
-  const [network, setNetwork] = React.useState<NetworkState>({
-    inputs: [
-      { value: 0, editable: true },
-      { value: 1, editable: false },
-    ],
-    weights: [
-      { value: -1, editable: false },
-      { value: 0.5, editable: false },
-    ],
-    outputs: [{ editable: false }],
-  });
-  return <Perceptron network={network} onChangeNetwork={setNetwork} />;
+export function NetworkWithClassificationPlot(props: {
+  showTease: boolean;
+  hideTease: () => void;
+  network: NetworkState;
+  setNetwork: (network: NetworkState) => void;
+}) {
+  return (
+    <PerceptronWithExtraContent
+      showTease={props.showTease}
+      hideTease={props.hideTease}
+      network={props.network}
+      onChangeNetwork={props.setNetwork}
+      content={() => {
+        return (
+          <g transform="translate(25, 10)">
+            <ClassificationPlot
+              width={50}
+              height={50}
+              network={props.network}
+            />
+          </g>
+        );
+      }}
+    />
+  );
 }

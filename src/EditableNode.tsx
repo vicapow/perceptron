@@ -13,6 +13,8 @@ export function EditableNode({
   r,
   className,
   textClassName,
+  showTease,
+  label,
 }: {
   value: number;
   editable: boolean;
@@ -26,6 +28,8 @@ export function EditableNode({
   r: number;
   className: string;
   textClassName: string;
+  showTease: boolean;
+  label?: string;
 }) {
   const elementRef = React.useRef<SVGCircleElement>(null);
   const mouseStartRef = React.useRef<Point | undefined>(undefined);
@@ -37,6 +41,7 @@ export function EditableNode({
     React.useRef<(details: { value: number }) => void>(onChange);
 
   React.useEffect(() => {
+    console.log("ref for change event changed");
     onChangeRef.current = onChange;
   }, [onChange]);
 
@@ -133,6 +138,7 @@ export function EditableNode({
       newValue = minValue;
     }
     if (onChangeRef.current) {
+      console.log("issue change event");
       onChangeRef.current({ value: newValue });
     }
     return false;
@@ -155,9 +161,10 @@ export function EditableNode({
       {editable ? (
         <circle
           fill="rgba(0, 0, 0, 0.1)"
+          className={`${showTease ? "animate-ping" : ""}`}
           ref={elementRef}
           r={r * 1.5}
-          style={{ touchAction: "none" }}
+          style={{ touchAction: "none", pointerEvents: "none" }}
         />
       ) : null}
       <circle
@@ -184,6 +191,21 @@ export function EditableNode({
       >
         {Math.round(value * 100) / 100}
       </text>
+      {label && (
+        <text
+          x={-fontSize * 2}
+          y={fontSize * 0.4}
+          fontSize={fontSize}
+          className={textClassName}
+          style={{
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+          textAnchor="middle"
+        >
+          {label}
+        </text>
+      )}
     </g>
   );
 }
