@@ -163,7 +163,7 @@ export function EditableNode({
           fill="rgba(0, 0, 0, 0.1)"
           className={`${showTease ? "animate-ping" : ""}`}
           ref={elementRef}
-          r={r * 1.5}
+          r={r * 0.8}
           style={{ touchAction: "none", pointerEvents: "none" }}
         />
       ) : null}

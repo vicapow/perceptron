@@ -4,9 +4,12 @@ import { EditableNode } from "./EditableNode";
 import HeavisideActivation, { heaviside } from "./HeavisideActivation";
 import ClassificationPlot from "./ClassificationPlot";
 
+export type Input = { value: number; editable: boolean; label?: string };
+export type Weight = Input;
+
 export type NetworkState = {
-  inputs: Array<{ value: number; editable: boolean; label?: string }>;
-  weights: Array<{ value: number; editable: boolean; label?: string }>;
+  inputs: Array<Input>;
+  weights: Array<Weight>;
   outputs: Array<{ editable: boolean }>;
 };
 
@@ -16,11 +19,43 @@ export const NOT_GATE_NETWORK = {
     { value: 1, editable: false, label: "1" },
   ],
   weights: [
-    { value: -1, editable: true },
-    { value: 0.5, editable: true },
+    { value: -1, editable: false },
+    { value: 0.5, editable: false },
   ],
   outputs: [{ editable: false }],
 };
+
+export const OR_GATE_NETWORK = {
+  inputs: [
+    { value: 0, editable: true, label: "X₁" },
+    { value: 0, editable: true, label: "X₂" },
+    { value: 1, editable: false, label: "1" },
+  ],
+  weights: [
+    { value: 2, editable: true },
+    { value: 2, editable: true },
+    { value: -1, editable: true },
+  ],
+  outputs: [{ editable: false }],
+};
+
+function setWeights(network: NetworkState, value: number): NetworkState {
+  let weights: Array<Weight> = [];
+  for (let i = 0; i < network.weights.length; i++) {
+    weights.push({
+      ...network.weights[i]!,
+      value,
+    });
+  }
+  return {
+    ...network,
+    weights,
+  };
+}
+
+export function zeroWeights(network: NetworkState): NetworkState {
+  return setWeights(network, 0);
+}
 
 export function networkOutput(network: NetworkState) {
   let outputValue = 0;
@@ -57,12 +92,20 @@ export function PerceptronWithExtraContent(props: {
   );
 }
 
-export function PerceptronAlone(props: {
+type PerceptronAloneProps = {
   network: NetworkState;
   onChangeNetwork: (network: NetworkState) => void;
   content?: (width: number, height: number) => React.ReactNode;
   showTease: boolean;
-}) {
+};
+
+export class PerceptronAlone extends React.PureComponent<PerceptronAloneProps> {
+  override render() {
+    return <PerceptronAloneInternal {...this.props} />;
+  }
+}
+
+function PerceptronAloneInternal(props: PerceptronAloneProps) {
   const [wC, hC] = [400, 160];
   const [width, height] = [400, 200];
   return (
@@ -343,19 +386,7 @@ export function OrGatePerceptron(props: {
   showTease: boolean;
   hideTease: () => void;
 }) {
-  const [network, setNetwork] = React.useState<NetworkState>({
-    inputs: [
-      { value: 0, editable: true, label: "X₁" },
-      { value: 0, editable: true, label: "X₂" },
-      { value: 1, editable: false, label: "1" },
-    ],
-    weights: [
-      { value: 2, editable: false },
-      { value: 2, editable: false },
-      { value: -1, editable: false },
-    ],
-    outputs: [{ editable: false }],
-  });
+  const [network, setNetwork] = React.useState<NetworkState>(OR_GATE_NETWORK);
   return (
     <PerceptronWithExtraContent
       network={network}

@@ -11,11 +11,19 @@ import { Point } from "./bezier";
 const xScale = scaleLinear<number>({ domain: [0, 1] });
 const yScale = scaleLinear<number>({ domain: [0, 1] });
 
-export default function ClassificationPlot(props: {
+type Props = {
   network: NetworkState;
   width: number;
   height: number;
-}) {
+};
+
+export default class ClassiciationPlot extends React.PureComponent<Props> {
+  override render() {
+    return <ClassificationPlotInternal {...this.props} />;
+  }
+}
+
+function ClassificationPlotInternal(props: Props) {
   const xMax = props.width;
   const yMax = props.height;
 
@@ -61,7 +69,8 @@ export default function ClassificationPlot(props: {
           labelProps={{
             fontSize: 8,
             textAnchor: "middle",
-            transform: "translate(8, 29), rotate(0)",
+            transform: "translate(34, 55), rotate(0)",
+            className: "fill-sky-500",
           }}
           scale={yScale}
           tickLength={2}
@@ -75,6 +84,7 @@ export default function ClassificationPlot(props: {
         labelProps={{
           fontSize: 8,
           textAnchor: "middle",
+          className: "fill-sky-500",
         }}
         top={yMax}
         tickLength={2}
