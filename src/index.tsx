@@ -15,6 +15,7 @@ import {
   OR_GATE_NETWORK,
   zeroWeights,
   networkOutput,
+  modifyInputs,
   Input,
 } from "./Perceptron";
 import { IntroNeuron } from "./IntroNeuron";
@@ -36,8 +37,8 @@ type AppStateAndNetwork = {
 };
 
 function arraysEqual<T>(
-  a: Array<T>,
-  b: Array<T>,
+  a: ReadonlyArray<T>,
+  b: ReadonlyArray<T>,
   check: (x: T, y: T) => boolean = (x, y) => x === y,
 ) {
   if (a.length !== b.length) {
@@ -77,6 +78,23 @@ function OutputPill(props: React.PropsWithChildren) {
       {props.children}
     </span>
   );
+}
+function HOutPill(props: React.PropsWithChildren & { value: 0 | 1 }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium text-white ring-2 ring-inset ${
+        props.value === 1
+          ? "ring-lime-200 bg-lime-400"
+          : "ring-orange-200 bg-orange-400"
+      }`}
+    >
+      {props.value}
+    </span>
+  );
+}
+
+function Output() {
+  return <OutputPill>output</OutputPill>;
 }
 
 type InputOrWeightSliderProps = {
@@ -311,24 +329,16 @@ export default function Example() {
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               To make sure the values are only 0 or 1, the activation function
-              takes output value and returns 0 if the value is negative and 1 if
-              the value is positive.
+              takes the <Output /> value and returns <HOutPill value={0} /> if
+              the value is negative and <HOutPill value={1} /> if the value is
+              positive.
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               H({" "}
               <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-pink-500 text-pink-200 ring-2 ring-inset ring-pink-200">
                 {round(networkOutput(appState.notGateNetwork))}
               </span>
-              ) ={" "}
-              <span
-                className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium text-white ring-2 ring-inset ${
-                  notGateHOut === 1
-                    ? "ring-lime-200 bg-lime-400"
-                    : "ring-orange-200 bg-orange-400"
-                }`}
-              >
-                {notGateHOut}
-              </span>
+              ) = <HOutPill value={notGateHOut} />
             </p>
             <svg viewBox="0 0 300 130">
               <g transform="translate(100,10)">
@@ -356,10 +366,11 @@ export default function Example() {
           </div>
           <div className="mx-auto">
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Can you set the weights to implement the OR perceptron? When
-              either of the two inputs are a 1, H(
-              <OutputPill>output</OutputPill>) should be 1. Otherwise, H(
-              <OutputPill>output</OutputPill>) should be 0.
+              Can you set the <WeightPill>weights</WeightPill> to implement the
+              OR perceptron? When either of the two{" "}
+              <InputPill>inputs</InputPill> are a <InputPill>1</InputPill>, H(
+              <Output />) should be <HOutPill value={1} />. Otherwise, H(
+              <Output />) should be <HOutPill value={0} />.
             </p>
             <div className="mt-6">
               <X1SliderAndPill
@@ -449,15 +460,63 @@ export default function Example() {
             >
               show correct weights
             </button>
-            <svg viewBox="0 0 300 130">
-              <g transform="translate(100,10)">
-                <ClassificationPlot
-                  width={100}
-                  height={100}
-                  network={appState.orGateNetwork}
-                />
-              </g>
-            </svg>
+            <table className="w-full table-fixed">
+              <thead>
+                <tr>
+                  <th>
+                    <InputPill>X{subscript(1)}</InputPill>
+                  </th>
+                  <th>
+                    <InputPill>X{subscript(2)}</InputPill>
+                  </th>
+                  <th>expected</th>
+                  <th>
+                    H(
+                    <Output />)
+                  </th>
+                  <th>
+                    H(
+                    <Output />) - expected
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  [0, 0, 0],
+                  [0, 1, 1],
+                  [1, 0, 1],
+                  [1, 1, 1],
+                ]
+                  .map((row) => {
+                    const network = modifyInputs(
+                      row.slice(0, 2),
+                      appState.orGateNetwork,
+                    );
+                    const h = heaviside(networkOutput(network));
+                    const expected = row[row.length - 1] as 0 | 1;
+                    const error = h - expected;
+                    return [
+                      ...row.slice(0, 2).map((a) => <InputPill>{a}</InputPill>),
+                      <HOutPill value={expected} />,
+                      <HOutPill value={h} />,
+                      error,
+                    ];
+                  })
+                  .map((row, index) => {
+                    return (
+                      <tr key={index}>
+                        {row.map((r, index) => (
+                          <td key={index}>{r}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              To get to the weights without having to guess them, we can train
+              the perceptron using examples.
+            </p>
           </div>
           {/* <div className="mx-auto">
             <AndGatePerceptron showTease={showTease} hideTease={hideTease} />

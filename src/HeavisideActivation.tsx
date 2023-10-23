@@ -8,7 +8,7 @@ import { Point } from "./bezier";
 
 export const background = "#f3f3f3";
 
-export function heaviside(d: number) {
+export function heaviside(d: number): 0 | 1 {
   if (d < 0) {
     return 0;
   }
@@ -167,6 +167,9 @@ export default function Theshold({ width, height, input }: HeavisideProps) {
         cy={yScale(output)}
         r="2"
       />
+      <text fontSize="10" textAnchor="middle" x={xScale(0)} y={-5}>
+        H
+      </text>
     </Group>
   );
 }

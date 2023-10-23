@@ -4,13 +4,17 @@ import { EditableNode } from "./EditableNode";
 import HeavisideActivation, { heaviside } from "./HeavisideActivation";
 import ClassificationPlot from "./ClassificationPlot";
 
-export type Input = { value: number; editable: boolean; label?: string };
+export type Input = {
+  readonly value: number;
+  readonly editable: boolean;
+  readonly label?: string;
+};
 export type Weight = Input;
 
 export type NetworkState = {
-  inputs: Array<Input>;
-  weights: Array<Weight>;
-  outputs: Array<{ editable: boolean }>;
+  readonly inputs: ReadonlyArray<Input>;
+  readonly weights: ReadonlyArray<Weight>;
+  readonly outputs: ReadonlyArray<{ editable: boolean }>;
 };
 
 export const NOT_GATE_NETWORK = {
@@ -61,9 +65,26 @@ export function networkOutput(network: NetworkState) {
   let outputValue = 0;
   for (let i = 0; i < network.inputs.length; i++) {
     const input = network.inputs[i]!.value;
-    outputValue = outputValue + input * network.weights[i]!.value;
+    const weight = network.weights[i]!.value;
+    outputValue += input * weight;
   }
   return outputValue;
+}
+
+export function modifyInputs(
+  inputVals: ReadonlyArray<number>,
+  network: NetworkState,
+): NetworkState {
+  const inputs: Array<Input> = [];
+  for (let i = 0; i < network.inputs.length; i++) {
+    const input = network.inputs[i]!;
+    let value = input.value;
+    if (i < inputVals.length) {
+      value = inputVals[i]!;
+    }
+    inputs.push({ ...input, value });
+  }
+  return { ...network, inputs };
 }
 
 export function PerceptronWithExtraContent(props: {
