@@ -3,7 +3,53 @@
   <head>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <meta
+      name="description"
+      content="To LLMs that can pass the bar exam, to renforcement learning
+      alogrithms that can play video games, the foundational concept in
+      all these are the perceptron, the powerhouse of netural networks.
+      But what are they?"
+    />
+    <meta property="og:title" content="The Perceptron" />
+    <meta
+      property="og:description"
+      content="To LLMs that can pass the bar exam, to renforcement learning
+      alogrithms that can play video games, the foundational concept in
+      all these are the perceptron, the powerhouse of netural networks.
+      But what are they?"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vicapow.github.io/perceptron/" />
+    <meta name="twitter:site" content="@vicapow" />
+    <meta name="twitter:creator" content="@vicapow" />
+    <meta name="twitter:title" content="The Perceptron" />
+    <meta
+      name="twitter:description"
+      content="To LLMs that can pass the bar exam, to renforcement learning
+      alogrithms that can play video games, the foundational concept in
+      all these are the perceptron, the powerhouse of netural networks.
+      But what are they?"
+    />
   </head>
+  <script>
+    window.twttr = (function (d, s, id) {
+      var js,
+        fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://platform.twitter.com/widgets.js";
+      fjs.parentNode.insertBefore(js, fjs);
+
+      t._e = [];
+      t.ready = function (f) {
+        t._e.push(f);
+      };
+
+      return t;
+    })(document, "script", "twitter-wjs");
+  </script>
   <body>
     <div id="root"></div>
     <script src="./main.js"></script>

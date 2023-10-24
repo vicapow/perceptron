@@ -43,6 +43,13 @@ export const OR_GATE_NETWORK = {
   outputs: [{ editable: false }],
 };
 
+export const OR_GATE_DATA = [
+  [0, 0, 0],
+  [0, 1, 1],
+  [1, 0, 1],
+  [1, 1, 1],
+];
+
 function setWeights(network: NetworkState, value: number): NetworkState {
   let weights: Array<Weight> = [];
   for (let i = 0; i < network.weights.length; i++) {
@@ -450,4 +457,98 @@ export function NetworkWithClassificationPlot(props: {
       }}
     />
   );
+}
+
+type Step = {
+  row: ReadonlyArray<number>;
+  dj: number;
+  yj: number;
+  ej: number;
+  deltas: Array<number>;
+};
+
+type Epoch = {
+  steps: Array<Step>;
+};
+
+export class ComputedWeights extends React.PureComponent<{
+  network: NetworkState;
+  data: ReadonlyArray<ReadonlyArray<number>>;
+}> {
+  override render() {
+    const r = 0.1;
+    const { data, network } = this.props;
+    let network1 = network;
+    let weightUpdates = [];
+    let error = 1;
+    let threshold = 1;
+    const MAX_ITERATIONS = 10;
+    let iteration = 0;
+    const weights: Array<number> = [];
+    for (let i = 0; i < network1.weights.length; i++) {
+      weights.push(0);
+    }
+    const history: Array<{
+      iteration: number;
+      epoch: Epoch;
+      network: NetworkState;
+    }> = [];
+    while (error >= threshold && iteration < MAX_ITERATIONS) {
+      const epoch: Epoch = { steps: [] };
+      error = 0;
+      for (let i = 0; i < network1.weights.length; i++) {
+        weights[i] = 0;
+      }
+      for (const row of data) {
+        const step: Step = { dj: 0, yj: 0, ej: 0, deltas: [], row: [] };
+        const dj = row[row.length - 1] as 0 | 1;
+        const network2 = modifyInputs(row.slice(0, -1), network1);
+        const yj = heaviside(networkOutput(network2));
+        const ej = dj - yj;
+        error += Math.abs(ej);
+        for (let i = 0; i < network1.weights.length; i++) {
+          const xji = network2.inputs[i]!;
+          const delta = r * ej * xji.value;
+          weights[i] += delta;
+          step.deltas.push(delta);
+        }
+        step.row = row;
+        step.dj = dj;
+        step.yj = yj;
+        step.ej = ej;
+        epoch.steps.push(step);
+      }
+      // update network with new weights
+      network1 = {
+        ...network1,
+        weights: network1.weights.map((w, index) => ({
+          ...w,
+          value: w.value + weights[index]!,
+        })),
+      };
+      weightUpdates.push(network1.weights.map((w) => w.value));
+      history.push({
+        iteration,
+        epoch,
+        network: network1,
+      });
+      iteration++;
+    }
+    return (
+      <table>
+        <tbody>
+          {history.map((history) => {
+            return history.epoch.steps.map((step, index) => {
+              return (
+                <tr key={index}>
+                  <td>{step.row[0]}</td>
+                  <td>{step.row[1]}</td>
+                </tr>
+              );
+            });
+          })}
+        </tbody>
+      </table>
+    );
+  }
 }

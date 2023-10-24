@@ -13,10 +13,12 @@ import {
   NetworkState,
   NOT_GATE_NETWORK,
   OR_GATE_NETWORK,
+  OR_GATE_DATA,
   zeroWeights,
   networkOutput,
   modifyInputs,
   Input,
+  ComputedWeights,
 } from "./Perceptron";
 import { IntroNeuron } from "./IntroNeuron";
 
@@ -257,13 +259,27 @@ export default function Example() {
   const showTease = appState.showTease;
   const notGateHOut = heaviside(networkOutput(appState.notGateNetwork));
   return (
-    <div className="bg-white">
+    <div className="bg-white mb-10">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl sm:text-center">
           <IntroNeuron />
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             The Perceptron
           </h2>
+          <h3>
+            <a
+              className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+              href="https://twitter.com/vicapow"
+            >
+              By Victor Powell
+            </a>
+            <a
+              className="twitter-share-button"
+              href="https://twitter.com/intent/tweet"
+            >
+              Tweet
+            </a>
+          </h3>
           <p className="mt-6 text-lg leading-8 text-gray-600">
             To LLMs that can pass the bar exam, to renforcement learning
             alogrithms that can play video games, the foundational concept in
@@ -372,6 +388,50 @@ export default function Example() {
               <Output />) should be <HOutPill value={1} />. Otherwise, H(
               <Output />) should be <HOutPill value={0} />.
             </p>
+            <table className="w-full table-fixed">
+              <thead className="">
+                <tr>
+                  <th>
+                    <InputPill>X{subscript(1)}</InputPill>
+                  </th>
+                  <th>
+                    <InputPill>X{subscript(2)}</InputPill>
+                  </th>
+                  <th>expected</th>
+                  <th>actual</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  [0, 0, 0],
+                  [0, 1, 1],
+                  [1, 0, 1],
+                  [1, 1, 1],
+                ]
+                  .map((row) => {
+                    const network = modifyInputs(
+                      row.slice(0, 2),
+                      appState.orGateNetwork,
+                    );
+                    const h = heaviside(networkOutput(network));
+                    const expected = row[row.length - 1] as 0 | 1;
+                    return [
+                      ...row.slice(0, 2).map((a) => <InputPill>{a}</InputPill>),
+                      <HOutPill value={expected} />,
+                      <HOutPill value={h} />,
+                    ];
+                  })
+                  .map((row, index) => {
+                    return (
+                      <tr key={index}>
+                        {row.map((r, index) => (
+                          <td key={index}>{r}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
             <div className="mt-6">
               <X1SliderAndPill
                 appState={appState}
@@ -460,6 +520,10 @@ export default function Example() {
             >
               show correct weights
             </button>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              To get to the <WeightPill>weights</WeightPill> without having to
+              guess them, we can instead train the perceptron using examples.
+            </p>
             <table className="w-full table-fixed">
               <thead>
                 <tr>
@@ -470,53 +534,31 @@ export default function Example() {
                     <InputPill>X{subscript(2)}</InputPill>
                   </th>
                   <th>expected</th>
-                  <th>
-                    H(
-                    <Output />)
-                  </th>
-                  <th>
-                    H(
-                    <Output />) - expected
-                  </th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  [0, 0, 0],
-                  [0, 1, 1],
-                  [1, 0, 1],
-                  [1, 1, 1],
-                ]
-                  .map((row) => {
-                    const network = modifyInputs(
-                      row.slice(0, 2),
-                      appState.orGateNetwork,
-                    );
-                    const h = heaviside(networkOutput(network));
-                    const expected = row[row.length - 1] as 0 | 1;
-                    const error = h - expected;
-                    return [
-                      ...row.slice(0, 2).map((a) => <InputPill>{a}</InputPill>),
-                      <HOutPill value={expected} />,
-                      <HOutPill value={h} />,
-                      error,
-                    ];
-                  })
-                  .map((row, index) => {
-                    return (
-                      <tr key={index}>
-                        {row.map((r, index) => (
-                          <td key={index}>{r}</td>
-                        ))}
-                      </tr>
-                    );
-                  })}
+                {OR_GATE_DATA.map((row) => {
+                  return [
+                    ...row.slice(0, 2).map((a) => <InputPill>{a}</InputPill>),
+                    <HOutPill value={row[2] as 0 | 1} />,
+                  ];
+                }).map((row, index) => {
+                  return (
+                    <tr key={index}>
+                      {row.map((r, index) => (
+                        <td key={index}>{r}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              To get to the weights without having to guess them, we can train
-              the perceptron using examples.
-            </p>
+            <div>
+              <ComputedWeights
+                network={appState.orGateNetwork}
+                data={OR_GATE_DATA}
+              />
+            </div>
           </div>
           {/* <div className="mx-auto">
             <AndGatePerceptron showTease={showTease} hideTease={hideTease} />

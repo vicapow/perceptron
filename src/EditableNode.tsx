@@ -41,7 +41,6 @@ export function EditableNode({
     React.useRef<(details: { value: number }) => void>(onChange);
 
   React.useEffect(() => {
-    console.log("ref for change event changed");
     onChangeRef.current = onChange;
   }, [onChange]);
 
@@ -138,7 +137,6 @@ export function EditableNode({
       newValue = minValue;
     }
     if (onChangeRef.current) {
-      console.log("issue change event");
       onChangeRef.current({ value: newValue });
     }
     return false;
