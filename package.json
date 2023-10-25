@@ -4,6 +4,7 @@
   "dependencies": {
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
+    "@rive-app/react-canvas": "^4.4.0",
     "@visx/axis": "^3.4.0",
     "@visx/curve": "^3.3.0",
     "@visx/grid": "^3.3.0",

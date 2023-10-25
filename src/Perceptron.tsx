@@ -152,6 +152,7 @@ export function PerceptronWithExtraContent(props: {
   onChangeNetwork: (network: NetworkState) => void;
   content?: (width: number, height: number) => React.ReactNode;
   showTease: boolean;
+  showHInputLine: boolean;
   hideTease: () => void;
 }) {
   const [containerWidth, containerHeight] = [400, 260];
@@ -450,6 +451,7 @@ export function AndGatePerceptron(props: {
   let outputValue = heaviside(networkOutput(network));
   return (
     <PerceptronWithExtraContent
+      showHInputLine={true}
       showTease={props.showTease}
       hideTease={props.hideTease}
       network={network}
@@ -482,6 +484,7 @@ export function OrGatePerceptron(props: {
   const [network, setNetwork] = React.useState<NetworkState>(OR_GATE_NETWORK);
   return (
     <PerceptronWithExtraContent
+      showHInputLine={true}
       network={network}
       showTease={props.showTease}
       hideTease={props.hideTease}
@@ -505,6 +508,7 @@ export function NetworkWithClassificationPlot(props: {
 }) {
   return (
     <PerceptronWithExtraContent
+      showHInputLine={true}
       showTease={props.showTease}
       hideTease={props.hideTease}
       network={props.network}
@@ -668,7 +672,7 @@ export class ComputedWeights extends React.PureComponent<
               );
             })}
         </div>
-        <div className="min-h-80">
+        <div className="min-h-80 overflow-scroll">
           <table className="mx-auto w-full">
             <thead className="sticky top-0">
               <tr className="bg-white">

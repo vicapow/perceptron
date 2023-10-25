@@ -406,6 +406,18 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
+"@rive-app/canvas@2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@rive-app/canvas/-/canvas-2.5.0.tgz#c460496bca90b97244844afe3abd93cf5d92540c"
+  integrity sha512-J2RMJ6+ZiuVTEOKdQJEAkOV0oPulaPQ47a2KrHERDGE9Ahk9eP1VgEXlxJKgOeXPs+ZctGjEej3B2Zjx141IUQ==
+
+"@rive-app/react-canvas@^4.4.0":
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/@rive-app/react-canvas/-/react-canvas-4.4.0.tgz#c7da5a7b0f77051f1ad48214d888d308f8fa0e08"
+  integrity sha512-E3Omy7Nag56XsxsgWCilUhTjDOXLCFmVVd0N/8mZlh/asGs/FstHypA72cjy/XepnObE5aDq008RQnVX93a7yQ==
+  dependencies:
+    "@rive-app/canvas" "2.5.0"
+
 "@types/body-parser@*":
   version "1.19.3"
   resolved "https://registry.npmjs.org/@types/body-parser/-/body-parser-1.19.3.tgz"

@@ -1,5 +1,8 @@
-// @ts-ignore
-window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = { isDisabled: true };
+try {
+  (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ = { isDisabled: true };
+} catch (e) {
+  // Just trying to hide irrelevant console noise.
+}
 
 import "./index.css";
 import "flowbite";
@@ -8,6 +11,7 @@ import ReactDOM from "react-dom/client";
 import { heaviside } from "./HeavisideActivation";
 import ClassificationPlot from "./ClassificationPlot";
 import { RangeSlider } from "flowbite-react";
+import { useRive, Layout, Fit, Alignment } from "@rive-app/react-canvas";
 import {
   PerceptronAlone,
   NOT_GATE_NETWORK,
@@ -21,11 +25,12 @@ import {
   Input,
   ComputedWeights,
 } from "./Perceptron";
-import { IntroNeuron } from "./IntroNeuron";
 import subscript from "./subscript";
 import { InputPill, OutputPill, WeightPill, HOutPill } from "./Pill";
 import IrisSetosaData from "./IrisSetosaData";
 import { AppState, NetworkName } from "./AppState";
+import PerceptronRiv from "./perceptron.riv";
+import SizeContainer from "./SizeContainer";
 
 type AppStateAndNetwork = {
   appState: AppState;
@@ -61,13 +66,14 @@ type InputOrWeightSliderProps = {
   appState: AppState;
   setAppState: (appState: AppState) => void;
   networkName: NetworkName;
+  className: string;
 };
 
 function InputSlider(props: InputOrWeightSliderProps & { inputIndex: number }) {
   const { appState, setAppState, inputIndex } = props;
   return (
     <RangeSlider
-      className={rangeSliderClassName}
+      className={props.className}
       id={`x-input-slider-${inputIndex}`}
       min="0"
       max="1"
@@ -99,7 +105,7 @@ function WeightSlider(
   const { appState, setAppState, weightIndex } = props;
   return (
     <RangeSlider
-      className="col-span-7"
+      className={props.className}
       id={`x-weight-slider-${weightIndex}`}
       min="-2"
       max="2"
@@ -142,34 +148,47 @@ function W3SliderAndPill(props: AppStateAndNetwork) {
   return <WeightSliderAndPill {...props} weightIndex={2} />;
 }
 
-const inputSliderContainerClassName = "grid grid-cols-7 grid-flow-col";
-const inputSliderLabelClassName = "col-span-1 text-left";
-const rangeSliderClassName = "col-span-6";
+const rangeSliderClassName = "flex-1";
+const rangeSliderLabelClassName =
+  "block mb-2 text-sm font-medium text-gray-900 dark:text-white";
+
+function SliderWithPillContainer(
+  props: React.PropsWithChildren & { label: React.ReactNode },
+) {
+  return (
+    <div className={"flex gap-2"}>
+      <div className={"flex-none w-20"}>{props.label}</div>
+      {props.children}
+    </div>
+  );
+}
 
 function InputSliderAndPill(
   props: AppStateAndNetwork & { inputIndex: number },
 ) {
   const { appState, setAppState, networkName, inputIndex } = props;
   return (
-    <div className={inputSliderContainerClassName}>
-      <div className={inputSliderLabelClassName}>
+    <SliderWithPillContainer
+      label={
         <label
           htmlFor={`x-input-slider-${inputIndex}`}
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+          className={rangeSliderLabelClassName}
         >
           <InputPill>X{subscript(inputIndex + 1)}</InputPill> ={" "}
           <span className="text-sky-500">
             {round(appState[networkName].inputs[inputIndex]!.value)}
           </span>
         </label>
-      </div>
+      }
+    >
       <InputSlider
+        className={rangeSliderClassName}
         appState={appState}
         setAppState={setAppState}
         networkName={networkName}
         inputIndex={inputIndex}
       />
-    </div>
+    </SliderWithPillContainer>
   );
 }
 
@@ -178,29 +197,51 @@ function WeightSliderAndPill(
 ) {
   const { appState, setAppState, networkName, weightIndex } = props;
   return (
-    <div className={inputSliderContainerClassName}>
-      <div className={inputSliderLabelClassName}>
+    <SliderWithPillContainer
+      label={
         <label
           htmlFor={`x-weight-slider-${weightIndex}`}
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+          className={rangeSliderLabelClassName}
         >
           <WeightPill>W{subscript(weightIndex + 1)}</WeightPill> ={" "}
           <span className="text-amber-500">
             {round(appState[networkName].weights[weightIndex]!.value)}
           </span>
         </label>
-      </div>
+      }
+    >
       <WeightSlider
+        className={rangeSliderClassName}
         appState={appState}
         setAppState={setAppState}
         networkName={networkName}
         weightIndex={weightIndex}
       />
-    </div>
+    </SliderWithPillContainer>
   );
 }
 
-export default function Example() {
+const RivePerceptron = ({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}) => {
+  const { RiveComponent } = useRive({
+    src: PerceptronRiv,
+    stateMachines: "State Machine 1",
+    layout: new Layout({
+      fit: Fit.FitWidth,
+      // fit: Fit.FitWidth, // Change to: rive.Fit.Contain, or Cover
+      alignment: Alignment.TopCenter,
+    }),
+    autoplay: true,
+  });
+  return <RiveComponent style={{ width: width, height: height }} />;
+};
+
+function Example() {
   const [appState, setAppState] = React.useState<AppState>({
     notGateNetwork: NOT_GATE_NETWORK,
     orGateNetwork: zeroWeights(OR_GATE_NETWORK),
@@ -211,9 +252,13 @@ export default function Example() {
   const notGateHOut = heaviside(networkOutput(appState.notGateNetwork));
   return (
     <div className="bg-white mb-10">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl sm:text-center">
-          <IntroNeuron />
+      <div className="mx-auto max-w-7xl">
+        <SizeContainer className="w-full">
+          {({ width }) => (
+            <RivePerceptron {...{ width, height: width * 0.4 }} />
+          )}
+        </SizeContainer>
+        <div className="mx-5 sm:text-center m-5">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             The Perceptron
           </h2>
@@ -547,8 +592,8 @@ export default function Example() {
                   {IrisSetosaData.map((data, index) => {
                     return (
                       <tr key={index}>
-                        {data.map((d) => (
-                          <td>{d}</td>
+                        {data.map((d, index) => (
+                          <td key={index}>{d}</td>
                         ))}
                       </tr>
                     );
