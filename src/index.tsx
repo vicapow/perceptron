@@ -233,9 +233,9 @@ const RivePerceptron = ({
     stateMachines: "State Machine 1",
     layout: new Layout({
       fit: Fit.FitWidth,
-      // fit: Fit.FitWidth, // Change to: rive.Fit.Contain, or Cover
       alignment: Alignment.TopCenter,
     }),
+    artboard: "New Artboard",
     autoplay: true,
   });
   return <RiveComponent style={{ width: width, height: height }} />;
