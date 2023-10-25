@@ -1,6 +1,6 @@
-## A template project setup
+## The Perceptron
 
-This is my preferred project setup. It includes React with JSX, TypeScript, Prettier, and TailwindCSS.
+A small blog post to give folks an intro into perceptrons.
 
 ## Setup
 

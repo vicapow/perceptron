@@ -10,11 +10,12 @@ import ClassificationPlot from "./ClassificationPlot";
 import { RangeSlider } from "flowbite-react";
 import {
   PerceptronAlone,
-  NetworkState,
   NOT_GATE_NETWORK,
+  IRIS_NETWORK,
   OR_GATE_NETWORK,
   OR_GATE_DATA,
   zeroWeights,
+  Weight,
   networkOutput,
   modifyInputs,
   Input,
@@ -23,16 +24,8 @@ import {
 import { IntroNeuron } from "./IntroNeuron";
 import subscript from "./subscript";
 import { InputPill, OutputPill, WeightPill, HOutPill } from "./Pill";
-
-type ObjectKeys<T> = { [K in keyof T]: K };
-
-type AppState = {
-  notGateNetwork: NetworkState;
-  orGateNetwork: NetworkState;
-  showTease: boolean;
-};
-
-type NetworkName = keyof Omit<ObjectKeys<AppState>, "showTease">;
+import IrisSetosaData from "./IrisSetosaData";
+import { AppState, NetworkName } from "./AppState";
 
 type AppStateAndNetwork = {
   appState: AppState;
@@ -114,8 +107,8 @@ function WeightSlider(
       value={appState[props.networkName].weights[weightIndex]!.value}
       onChange={(e) => {
         const network = appState[props.networkName];
-        const weight: Input = network.weights[weightIndex]!;
-        let weights: Array<Input> = [];
+        const weight: Weight = network.weights[weightIndex]!;
+        let weights: Array<Weight> = [];
         for (let i = 0; i < network.weights.length; i++) {
           if (i === weightIndex) {
             weights.push({ ...weight, value: Number(e.target.value) });
@@ -211,6 +204,7 @@ export default function Example() {
   const [appState, setAppState] = React.useState<AppState>({
     notGateNetwork: NOT_GATE_NETWORK,
     orGateNetwork: zeroWeights(OR_GATE_NETWORK),
+    irisNetwork: IRIS_NETWORK,
     showTease: true,
   });
   const showTease = appState.showTease;
@@ -269,6 +263,7 @@ export default function Example() {
           </div>
           <div className="mt-6">
             <PerceptronAlone
+              showHInputLine={true}
               showTease={showTease}
               network={appState.notGateNetwork}
               onChangeNetwork={(network) => {
@@ -447,6 +442,7 @@ export default function Example() {
             </p>
             <div className="mt-6">
               <PerceptronAlone
+                showHInputLine={true}
                 showTease={showTease}
                 network={appState.orGateNetwork}
                 onChangeNetwork={(network) => {
@@ -518,13 +514,91 @@ export default function Example() {
               wiggle the weight a bit in the correct direction.
             </p>
             <ComputedWeights
-              network={appState.orGateNetwork}
+              appState={appState}
+              setAppState={setAppState}
+              networkName="orGateNetwork"
               data={OR_GATE_DATA}
             />
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              All the examples so far were pretty silly. We could have used code
+              to describe the logic much more easily. Perceptrons (and neural
+              networks) really shine when it's difficult to describe the rules
+              but you have lots of example data. And these same simple concepts
+              work when the number of inputs (dimensions) are quite large.
+              Here's a more complex, but real world example data of flowers.
+              With this data, we can generate a perceptron that can tell us for
+              new flowers we haven't see if it's an Iris Setosa (
+              <HOutPill value={1} />) or not (
+              <HOutPill value={0} />
+              ).
+            </p>
+            <div className="overflow-scroll h-80">
+              <table className="table-auto w-full">
+                <thead className="sticky top-0">
+                  <tr className="bg-gray-100">
+                    <th className="w-20 px-4 py-2">sepal length (cm)</th>
+                    <th className="px-4 py-2">sepal width (cm)</th>
+                    <th className="px-4 py-2">petal length (cm)</th>
+                    <th className="px-4 py-2">petal width (cm)</th>
+                    <th className="px-4 py-2">class of iris</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {IrisSetosaData.map((data, index) => {
+                    return (
+                      <tr key={index}>
+                        {data.map((d) => (
+                          <td>{d}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-6">
+              <PerceptronAlone
+                showHInputLine={false}
+                showTease={showTease}
+                network={appState.irisNetwork}
+                onChangeNetwork={(network) => {
+                  setAppState({
+                    ...appState,
+                    irisNetwork: network,
+                    showTease: false,
+                  });
+                }}
+              />
+            </div>
+            <ComputedWeights
+              appState={appState}
+              setAppState={setAppState}
+              networkName="irisNetwork"
+              data={IrisSetosaData.map((row) => [
+                ...(row.slice(0, -1) as [number, number, number, number]),
+                row[row.length - 1] === "Iris-setosa" ? 1 : 0,
+              ])}
+            />
+            <div>
+              Thanks for reading! If you'd like to propose changes to this post,
+              please fork the project on github at:{" "}
+              <a
+                href="https://github.com/vicapow/perceptron"
+                className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+              >
+                github.com/vicapow/perceptron
+              </a>
+            </div>
+            <div>
+              For other explanations, checkout{" "}
+              <a
+                href="https://setosa.io/#/"
+                className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+              >
+                setosa.io
+              </a>
+            </div>
           </div>
-          {/* <div className="mx-auto">
-            <AndGatePerceptron showTease={showTease} hideTease={hideTease} />
-          </div> */}
         </div>
       </div>
     </div>

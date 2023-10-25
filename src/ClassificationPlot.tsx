@@ -4,7 +4,7 @@ import { LinePath } from "@visx/shape";
 import { scaleLinear } from "@visx/scale";
 import { AxisLeft, AxisBottom } from "@visx/axis";
 import { GridRows, GridColumns } from "@visx/grid";
-import { NetworkState, networkOutput } from "./Perceptron";
+import { NetworkState, networkOutput, Input } from "./Perceptron";
 import { heaviside } from "./HeavisideActivation";
 import { Point } from "./bezier";
 
@@ -15,6 +15,8 @@ type Props = {
   network: NetworkState;
   width: number;
   height: number;
+  xIndex?: number;
+  yIndex?: number;
 };
 
 export default class ClassiciationPlot extends React.PureComponent<Props> {
@@ -30,14 +32,37 @@ function ClassificationPlotInternal(props: Props) {
   xScale.range([0, xMax]);
   yScale.range([yMax, 0]);
 
+  let xIndex = props.xIndex;
+  let yIndex = props.yIndex;
+
+  if (xIndex === undefined) {
+    xIndex = 0;
+  }
+  if (yIndex === undefined) {
+    yIndex = 1;
+  }
+
   const data = [];
   const resolution = 10;
-  const inputA = { ...props.network.inputs[0]! };
-  const inputB = { ...props.network.inputs[1]! };
-  const network: NetworkState = {
-    ...props.network,
-    inputs: [inputA, inputB, ...props.network.inputs.slice(2)],
-  };
+  const inputA = { ...props.network.inputs[xIndex]! };
+  const inputB = { ...props.network.inputs[yIndex]! };
+
+  xScale.domain([inputA.minValue, inputA.maxValue]);
+  yScale.domain([inputB.minValue, inputB.maxValue]);
+
+  const inputs: Array<Input> = [];
+  for (let i = 0; i < props.network.inputs.length; i++) {
+    if (i === xIndex) {
+      inputs.push(inputA);
+    } else if (i === yIndex) {
+      inputs.push(inputB);
+    } else {
+      inputs.push(props.network.inputs[i]!);
+    }
+  }
+
+  const network: NetworkState = { ...props.network, inputs };
+
   const numInputs = network.inputs.length - 1;
   for (let i = 0; i <= resolution; i++) {
     if (numInputs <= 1) {
@@ -50,10 +75,12 @@ function ClassificationPlotInternal(props: Props) {
       for (let j = 0; j <= resolution; j++) {
         const a = i / resolution;
         const b = j / resolution;
-        inputA.value = a;
-        inputB.value = b;
+        inputA.value =
+          a * (inputA.maxValue - inputA.minValue) + inputA.minValue;
+        inputB.value =
+          b * (inputB.maxValue - inputB.minValue) + inputB.minValue;
         const output = heaviside(networkOutput(network));
-        data.push([a, b, output]);
+        data.push([inputA.value, inputB.value, output]);
       }
     }
   }
@@ -107,8 +134,8 @@ function ClassificationPlotInternal(props: Props) {
         className="stroke-sky-500"
         data={
           [
-            [props.network.inputs[0]!.value, 0],
-            [props.network.inputs[0]!.value, 1],
+            [props.network.inputs[xIndex]!.value, inputB.minValue],
+            [props.network.inputs[xIndex]!.value, inputB.maxValue],
           ] as Array<Point>
         }
         x={(d) => xScale(d[0])}
@@ -120,8 +147,14 @@ function ClassificationPlotInternal(props: Props) {
         className="stroke-sky-500"
         data={
           [
-            [0, numInputs === 1 ? 0.5 : props.network.inputs[1]!.value],
-            [1, numInputs === 1 ? 0.5 : props.network.inputs[1]!.value],
+            [
+              inputA.minValue,
+              numInputs === 1 ? 0.5 : props.network.inputs[yIndex]!.value,
+            ],
+            [
+              inputA.maxValue,
+              numInputs === 1 ? 0.5 : props.network.inputs[yIndex]!.value,
+            ],
           ] as Array<Point>
         }
         x={(d) => xScale(d[0])}
@@ -131,9 +164,11 @@ function ClassificationPlotInternal(props: Props) {
       />
       <circle
         className="stroke-sky-500"
-        cx={xScale(props.network.inputs[0]!.value)}
+        cx={xScale(props.network.inputs[xIndex]!.value)}
         cy={
-          numInputs === 1 ? yScale(0.5) : yScale(props.network.inputs[1]!.value)
+          numInputs === 1
+            ? yScale(0.5)
+            : yScale(props.network.inputs[yIndex]!.value)
         }
         r={2}
         fill="transparent"

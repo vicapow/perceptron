@@ -191,7 +191,7 @@ export function EditableNode({
       </text>
       {label && (
         <text
-          x={-fontSize * 2}
+          x={-fontSize * 2 + 5}
           y={fontSize * 0.4}
           fontSize={fontSize}
           className={textClassName}
@@ -199,7 +199,7 @@ export function EditableNode({
             pointerEvents: "none",
             userSelect: "none",
           }}
-          textAnchor="middle"
+          textAnchor="end"
         >
           {label}
         </text>

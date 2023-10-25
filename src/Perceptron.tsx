@@ -6,13 +6,17 @@ import ClassificationPlot from "./ClassificationPlot";
 import subscript from "./subscript";
 import { InputPill, HOutPill, WeightPill } from "./Pill";
 import { RangeSlider } from "flowbite-react";
+import IrisSetosaData from "./IrisSetosaData";
+import { AppState, NetworkName } from "./AppState";
 
 export type Input = {
   readonly value: number;
   readonly editable: boolean;
   readonly label?: string;
+  readonly minValue: number;
+  readonly maxValue: number;
 };
-export type Weight = Input;
+export type Weight = Omit<Input, "minValue" | "maxValue">;
 
 export type NetworkState = {
   readonly inputs: ReadonlyArray<Input>;
@@ -22,8 +26,8 @@ export type NetworkState = {
 
 export const NOT_GATE_NETWORK = {
   inputs: [
-    { value: 0, editable: true, label: "X₁" },
-    { value: 1, editable: false, label: "1" },
+    { value: 0, editable: true, label: "X₁", minValue: 0, maxValue: 1 },
+    { value: 1, editable: false, label: "1", minValue: 0, maxValue: 1 },
   ],
   weights: [
     { value: -1, editable: false },
@@ -32,11 +36,53 @@ export const NOT_GATE_NETWORK = {
   outputs: [{ editable: false }],
 };
 
+export const IRIS_NETWORK: NetworkState = {
+  inputs: [
+    {
+      value: 0,
+      editable: true,
+      label: "sepal length",
+      minValue: IrisSetosaData.reduce((p, a) => Math.min(p, a[0]), 0),
+      maxValue: IrisSetosaData.reduce((p, a) => Math.max(p, a[0]), 0),
+    },
+    {
+      value: 0,
+      editable: true,
+      label: "sepal width",
+      minValue: IrisSetosaData.reduce((p, a) => Math.min(p, a[1]), 0),
+      maxValue: IrisSetosaData.reduce((p, a) => Math.max(p, a[1]), 0),
+    },
+    {
+      value: 0,
+      editable: true,
+      label: "petal length",
+      minValue: IrisSetosaData.reduce((p, a) => Math.min(p, a[2]), 0),
+      maxValue: IrisSetosaData.reduce((p, a) => Math.max(p, a[2]), 0),
+    },
+    {
+      value: 0,
+      editable: true,
+      label: "petal width",
+      minValue: IrisSetosaData.reduce((p, a) => Math.min(p, a[3]), 0),
+      maxValue: IrisSetosaData.reduce((p, a) => Math.max(p, a[3]), 0),
+    },
+    { value: 1, editable: false, label: "1", minValue: 1, maxValue: 1 },
+  ],
+  weights: [
+    { value: 0, editable: false },
+    { value: 0, editable: false },
+    { value: 0, editable: false },
+    { value: 0, editable: false },
+    { value: 0, editable: false },
+  ],
+  outputs: [{ editable: false }],
+};
+
 export const OR_GATE_NETWORK = {
   inputs: [
-    { value: 0, editable: true, label: "X₁" },
-    { value: 0, editable: true, label: "X₂" },
-    { value: 1, editable: false, label: "1" },
+    { value: 0, editable: true, label: "X₁", minValue: 0, maxValue: 1 },
+    { value: 0, editable: true, label: "X₂", minValue: 0, maxValue: 1 },
+    { value: 1, editable: false, label: "1", minValue: 1, maxValue: 1 },
   ],
   weights: [
     { value: 2, editable: true },
@@ -132,6 +178,7 @@ type PerceptronAloneProps = {
   onChangeNetwork: (network: NetworkState) => void;
   content?: (width: number, height: number) => React.ReactNode;
   showTease: boolean;
+  showHInputLine: boolean;
 };
 
 export class PerceptronAlone extends React.PureComponent<PerceptronAloneProps> {
@@ -159,12 +206,14 @@ export function Perceptron({
   showTease,
   width,
   height,
+  showHInputLine,
 }: {
   network: NetworkState;
   onChangeNetwork: (network: NetworkState) => void;
   showTease: boolean;
   width: number;
   height: number;
+  showHInputLine: boolean;
 }) {
   const rInputs = Math.min(
     (height / (network.inputs.length + 1) / 2) * 0.5,
@@ -176,12 +225,14 @@ export function Perceptron({
   );
 
   const inputs = network.inputs.map((input, index) => ({
-    x: 50,
+    x: 55,
     y: (height / (network.inputs.length + 1)) * (index + 1),
     r: rInputs,
     value: input.value,
     label: input.label,
     editable: input.editable,
+    minValue: input.minValue,
+    maxValue: input.maxValue,
   }));
 
   const outputs = network.outputs.map((_, index) => ({
@@ -226,28 +277,30 @@ export function Perceptron({
           />
         );
       })}
-      {inputs.map(({ x, y, r, value, label, editable }, index) => (
-        <EditableNode
-          editable={editable}
-          showTease={showTease}
-          cx={x}
-          cy={y}
-          r={r}
-          minValue={0}
-          maxValue={1}
-          fontSize={r * 0.9}
-          className="fill-sky-100 stroke-sky-500"
-          textClassName="fill-sky-300"
-          key={index}
-          label={label || ""}
-          value={value}
-          onChange={({ value }) => {
-            const inputs = [...network.inputs];
-            inputs[index] = { ...inputs[index]!, value: value };
-            onChangeNetwork({ ...network, inputs });
-          }}
-        />
-      ))}
+      {inputs.map(
+        ({ x, y, r, value, label, editable, minValue, maxValue }, index) => (
+          <EditableNode
+            editable={editable}
+            showTease={showTease}
+            cx={x}
+            cy={y}
+            r={r}
+            minValue={minValue || 0}
+            maxValue={maxValue || 1}
+            fontSize={r * 0.9}
+            className="fill-sky-100 stroke-sky-500"
+            textClassName="fill-sky-300"
+            key={index}
+            label={label || ""}
+            value={value}
+            onChange={({ value }) => {
+              const inputs = [...network.inputs];
+              inputs[index] = { ...inputs[index]!, value: value };
+              onChangeNetwork({ ...network, inputs });
+            }}
+          />
+        ),
+      )}
       {weights.map(({ loc, value, editable }, index) => {
         return (
           <EditableNode
@@ -315,7 +368,12 @@ export function Perceptron({
         );
       })}
       <g transform="translate(250, 63)">
-        <HeavisideActivation width={75} height={75} input={outputValue} />
+        <HeavisideActivation
+          width={75}
+          height={75}
+          input={outputValue}
+          showHInputLine={showHInputLine}
+        />
       </g>
       <g transform={`translate(360,${height / 2})`}>
         <circle
@@ -378,9 +436,9 @@ export function AndGatePerceptron(props: {
 }) {
   const [network, setNetwork] = React.useState<NetworkState>({
     inputs: [
-      { value: 0, editable: true, label: "X₁" },
-      { value: 0, editable: true, label: "X₂" },
-      { value: 1, editable: false, label: "1" },
+      { value: 0, editable: true, label: "X₁", minValue: 0, maxValue: 1 },
+      { value: 0, editable: true, label: "X₂", minValue: 0, maxValue: 1 },
+      { value: 1, editable: false, label: "1", minValue: 0, maxValue: 1 },
     ],
     weights: [
       { value: 1, editable: false, label: "W₁" },
@@ -544,8 +602,10 @@ function trainingHistory(
 }
 
 type ComputedWeightsProps = {
-  network: NetworkState;
   data: ReadonlyArray<ReadonlyArray<number>>;
+  appState: AppState;
+  setAppState: (appState: AppState) => void;
+  networkName: NetworkName;
 };
 
 export class ComputedWeights extends React.PureComponent<
@@ -560,11 +620,8 @@ export class ComputedWeights extends React.PureComponent<
     };
   }
   override render() {
-    const histories = trainingHistory(
-      this.props.network,
-      this.props.data,
-      this.state.r,
-    );
+    const network = this.props.appState[this.props.networkName];
+    const histories = trainingHistory(network, this.props.data, this.state.r);
     let historyIndex = this?.state?.historyIndex || 0;
     if (historyIndex + 1 > histories.length) {
       historyIndex = histories.length - 1;
@@ -584,7 +641,19 @@ export class ComputedWeights extends React.PureComponent<
           step="1"
           value={historyIndex}
           onChange={(e) => {
-            this.setState({ historyIndex: Number(e.target.value) });
+            let historyIndex = Number(e.target.value);
+            if (historyIndex + 1 > histories.length) {
+              historyIndex = histories.length - 1;
+            }
+            this.setState({ historyIndex });
+            const history = histories[historyIndex];
+            if (!history) {
+              return;
+            }
+            this.props.setAppState({
+              ...this.props.appState,
+              [this.props.networkName]: history.network,
+            });
           }}
         />
         <div>
@@ -599,57 +668,62 @@ export class ComputedWeights extends React.PureComponent<
               );
             })}
         </div>
-        <table className="mx-auto w-full">
-          <tbody>
-            <tr>
-              <td>
-                <InputPill>X{subscript(1)}</InputPill>
-              </td>
-              <td>
-                <InputPill>X{subscript(2)}</InputPill>
-              </td>
-              <td>
-                <b>Target (T)</b>
-              </td>
-              <td>
-                <b>Predicted (P)</b>
-              </td>
-              <td>
-                <b>Error (T - P)</b>
-              </td>
-              <td>
-                <WeightPill>W{subscript(1)}Δ</WeightPill>
-              </td>
-              <td>
-                <WeightPill>W{subscript(2)}Δ</WeightPill>
-              </td>
-              <td>
-                <WeightPill>W{subscript(3)}Δ</WeightPill>
-              </td>
-            </tr>
-            {history &&
-              history.epoch.steps.map((step, index) => {
-                return (
-                  <tr key={index}>
-                    {step.row.map((data, index) => (
-                      <td key={index}>
-                        {index + 1 < step.row.length ? (
-                          <InputPill>{data}</InputPill>
-                        ) : (
-                          <HOutPill value={data as 0 | 1} />
-                        )}
-                      </td>
-                    ))}
-                    <td>{<HOutPill value={step.yj as 0 | 1} />}</td>
-                    <td>{step.ej}</td>
-                    {step.deltas.map((data, index) => (
-                      <td key={index}>{data}</td>
-                    ))}
-                  </tr>
-                );
-              })}
-          </tbody>
-        </table>
+        <div className="min-h-80">
+          <table className="mx-auto w-full">
+            <thead className="sticky top-0">
+              <tr className="bg-white">
+                {(history?.network.inputs || [])
+                  .slice(0, -1)
+                  .map((_, index) => {
+                    return (
+                      <th key={index}>
+                        <InputPill>X{subscript(index + 1)}</InputPill>
+                      </th>
+                    );
+                  })}
+                <th>
+                  <b>Target (T)</b>
+                </th>
+                <th>
+                  <b>Predicted (P)</b>
+                </th>
+                <th>
+                  <b>Error (T - P)</b>
+                </th>
+                {(history?.network.weights || []).map((_, index) => {
+                  return (
+                    <th key={index}>
+                      <WeightPill>W{subscript(index + 1)}Δ</WeightPill>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {history &&
+                history.epoch.steps.map((step, index) => {
+                  return (
+                    <tr key={index}>
+                      {step.row.map((data, index) => (
+                        <td key={index}>
+                          {index + 1 < step.row.length ? (
+                            <InputPill>{data}</InputPill>
+                          ) : (
+                            <HOutPill value={data as 0 | 1} />
+                          )}
+                        </td>
+                      ))}
+                      <td>{<HOutPill value={step.yj as 0 | 1} />}</td>
+                      <td>{step.ej}</td>
+                      {step.deltas.map((data, index) => (
+                        <td key={index}>{round(data)}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
         <div>
           {nextHistory ? (
             <>
@@ -680,17 +754,19 @@ export class ComputedWeights extends React.PureComponent<
             this.setState({ r: Number(e.target.value) });
           }}
         />
-        {history && (
+        {/* {history && (
           <svg viewBox="0 0 300 130">
             <g transform="translate(100,10)">
               <ClassificationPlot
+                xIndex={0}
+                yIndex={1}
                 width={100}
                 height={100}
                 network={history.network}
               />
             </g>
           </svg>
-        )}
+        )} */}
       </div>
     );
   }

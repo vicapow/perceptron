@@ -40,9 +40,15 @@ export type HeavisideProps = {
   width: number;
   height: number;
   input: number;
+  showHInputLine: boolean;
 };
 
-export default function Theshold({ width, height, input }: HeavisideProps) {
+export default function Theshold({
+  width,
+  height,
+  input,
+  showHInputLine,
+}: HeavisideProps) {
   if (width < 10) return null;
 
   const margin = { top: 20, right: 15, bottom: 25, left: 20 };
@@ -72,11 +78,13 @@ export default function Theshold({ width, height, input }: HeavisideProps) {
 
   return (
     <Group left={margin.left} top={margin.top}>
-      <path
-        d={`M ${ip1} C ${ip2}, ${ip3}, ${ip4}`}
-        className="stroke-sky-500"
-        fill="transparent"
-      />
+      {showHInputLine ? (
+        <path
+          d={`M ${ip1} C ${ip2}, ${ip3}, ${ip4}`}
+          className="stroke-sky-500"
+          fill="transparent"
+        />
+      ) : null}
       <path
         d={`M ${op1} C ${op2}, ${op3}, ${op4}`}
         className="stroke-sky-500"
@@ -110,19 +118,21 @@ export default function Theshold({ width, height, input }: HeavisideProps) {
         y={(d) => yScale(y(d)) ?? 0}
         strokeWidth={1}
       />
-      <LinePath
-        className="stroke-sky-500"
-        data={
-          [
-            [input, -0.4],
-            [input, 1.4],
-          ] as Array<Point>
-        }
-        x={(d) => xScale(d[0])}
-        y={(d) => yScale(d[1])}
-        strokeWidth={1}
-        strokeDasharray={"1,2"}
-      />
+      {showHInputLine && (
+        <LinePath
+          className="stroke-sky-500"
+          data={
+            [
+              [input, -0.4],
+              [input, 1.4],
+            ] as Array<Point>
+          }
+          x={(d) => xScale(d[0])}
+          y={(d) => yScale(d[1])}
+          strokeWidth={1}
+          strokeDasharray={"1,2"}
+        />
+      )}
       <LinePath
         className="stroke-sky-500"
         data={
@@ -161,12 +171,14 @@ export default function Theshold({ width, height, input }: HeavisideProps) {
         cy={yScale(1)}
         r="2"
       />
-      <circle
-        className="stroke-sky-200 fill-sky-500"
-        cx={xScale(input)}
-        cy={yScale(output)}
-        r="2"
-      />
+      {showHInputLine && (
+        <circle
+          className="stroke-sky-200 fill-sky-500"
+          cx={xScale(input)}
+          cy={yScale(output)}
+          r="2"
+        />
+      )}
       <text fontSize="10" textAnchor="middle" x={xScale(0)} y={-5}>
         H
       </text>
