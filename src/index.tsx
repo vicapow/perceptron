@@ -21,6 +21,8 @@ import {
   ComputedWeights,
 } from "./Perceptron";
 import { IntroNeuron } from "./IntroNeuron";
+import subscript from "./subscript";
+import { InputPill, OutputPill, WeightPill, HOutPill } from "./Pill";
 
 type ObjectKeys<T> = { [K in keyof T]: K };
 
@@ -56,43 +58,6 @@ function arraysEqual<T>(
 
 function round(a: number) {
   return Math.round(a * 100) / 100;
-}
-
-function InputPill(props: React.PropsWithChildren) {
-  return (
-    <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-sky-100 text-sky-300 ring-2 ring-inset ring-sky-500">
-      {props.children}
-    </span>
-  );
-}
-
-function WeightPill(props: React.PropsWithChildren) {
-  return (
-    <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-amber-200 text-amber-400 ring-2 ring-inset ring-amber-400">
-      {props.children}
-    </span>
-  );
-}
-
-function OutputPill(props: React.PropsWithChildren) {
-  return (
-    <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-pink-500 text-pink-200 ring-2 ring-inset ring-pink-200">
-      {props.children}
-    </span>
-  );
-}
-function HOutPill(props: React.PropsWithChildren & { value: 0 | 1 }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium text-white ring-2 ring-inset ${
-        props.value === 1
-          ? "ring-lime-200 bg-lime-400"
-          : "ring-orange-200 bg-orange-400"
-      }`}
-    >
-      {props.value}
-    </span>
-  );
 }
 
 function Output() {
@@ -182,14 +147,6 @@ function W2SliderAndPill(props: AppStateAndNetwork) {
 }
 function W3SliderAndPill(props: AppStateAndNetwork) {
   return <WeightSliderAndPill {...props} weightIndex={2} />;
-}
-
-function subscript(i: number): string {
-  return i
-    .toString()
-    .split("")
-    .map((digit) => String.fromCharCode(8320 + parseInt(digit)))
-    .join("");
 }
 
 const inputSliderContainerClassName = "grid grid-cols-7 grid-flow-col";
@@ -522,7 +479,8 @@ export default function Example() {
             </button>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               To get to the <WeightPill>weights</WeightPill> without having to
-              guess them, we can instead train the perceptron using examples.
+              guess them, we can instead train the perceptron using examples,
+              aka, data.
             </p>
             <table className="w-full table-fixed">
               <thead>
@@ -553,12 +511,16 @@ export default function Example() {
                 })}
               </tbody>
             </table>
-            <div>
-              <ComputedWeights
-                network={appState.orGateNetwork}
-                data={OR_GATE_DATA}
-              />
-            </div>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              The steps for this involves going through every example and seeing
+              by how much the perceptron was wrong. If for a given example it
+              was correct, we don't have to do anything. If it was wrong, we
+              wiggle the weight a bit in the correct direction.
+            </p>
+            <ComputedWeights
+              network={appState.orGateNetwork}
+              data={OR_GATE_DATA}
+            />
           </div>
           {/* <div className="mx-auto">
             <AndGatePerceptron showTease={showTease} hideTease={hideTease} />

@@ -3,6 +3,9 @@ import { interpolateBezier, Point } from "./bezier";
 import { EditableNode } from "./EditableNode";
 import HeavisideActivation, { heaviside } from "./HeavisideActivation";
 import ClassificationPlot from "./ClassificationPlot";
+import subscript from "./subscript";
+import { InputPill, HOutPill, WeightPill } from "./Pill";
+import { RangeSlider } from "flowbite-react";
 
 export type Input = {
   readonly value: number;
@@ -49,6 +52,10 @@ export const OR_GATE_DATA = [
   [1, 0, 1],
   [1, 1, 1],
 ];
+
+function round(a: number) {
+  return Math.round(a * 100) / 100;
+}
 
 function setWeights(network: NetworkState, value: number): NetworkState {
   let weights: Array<Weight> = [];
@@ -302,7 +309,7 @@ export function Perceptron({
               style={{ pointerEvents: "none", userSelect: "none" }}
               textAnchor="middle"
             >
-              {Math.round(outputValue * 100) / 100}
+              {round(outputValue)}
             </text>
           </g>
         );
@@ -471,84 +478,220 @@ type Epoch = {
   steps: Array<Step>;
 };
 
-export class ComputedWeights extends React.PureComponent<{
+function trainingHistory(
+  network: NetworkState,
+  data: ReadonlyArray<ReadonlyArray<number>>,
+  r: number,
+) {
+  let network1 = {
+    ...network,
+    weights: network.weights.map((w) => ({ ...w, value: 0 })),
+  };
+  let error = 1;
+  let threshold = 1;
+  const MAX_ITERATIONS = 10;
+  let iteration = 0;
+  const weights: Array<number> = [];
+  for (let i = 0; i < network1.weights.length; i++) {
+    weights.push(0);
+  }
+  const history: Array<{
+    iteration: number;
+    epoch: Epoch;
+    network: NetworkState;
+  }> = [];
+  while (error >= threshold && iteration < MAX_ITERATIONS) {
+    const epoch: Epoch = { steps: [] };
+    error = 0;
+    for (let i = 0; i < network1.weights.length; i++) {
+      weights[i] = 0;
+    }
+    for (const row of data) {
+      const step: Step = { dj: 0, yj: 0, ej: 0, deltas: [], row: [] };
+      const dj = row[row.length - 1] as 0 | 1;
+      const network2 = modifyInputs(row.slice(0, -1), network1);
+      const yj = heaviside(networkOutput(network2));
+      const ej = dj - yj;
+      error += Math.abs(ej);
+      for (let i = 0; i < network1.weights.length; i++) {
+        const xji = network2.inputs[i]!;
+        const delta = r * ej * xji.value;
+        weights[i] += delta;
+        step.deltas.push(delta);
+      }
+      step.row = row;
+      step.dj = dj;
+      step.yj = yj;
+      step.ej = ej;
+      epoch.steps.push(step);
+    }
+    history.push({
+      iteration,
+      epoch,
+      network: network1,
+    });
+    // update network with new weights
+    network1 = {
+      ...network1,
+      weights: network1.weights.map((w, index) => ({
+        ...w,
+        value: w.value + weights[index]!,
+      })),
+    };
+    iteration++;
+  }
+  return history;
+}
+
+type ComputedWeightsProps = {
   network: NetworkState;
   data: ReadonlyArray<ReadonlyArray<number>>;
-}> {
+};
+
+export class ComputedWeights extends React.PureComponent<
+  ComputedWeightsProps,
+  { historyIndex: number; r: number }
+> {
+  constructor(props: ComputedWeightsProps) {
+    super(props);
+    this.state = {
+      historyIndex: 0,
+      r: 0.1,
+    };
+  }
   override render() {
-    const r = 0.1;
-    const { data, network } = this.props;
-    let network1 = network;
-    let weightUpdates = [];
-    let error = 1;
-    let threshold = 1;
-    const MAX_ITERATIONS = 10;
-    let iteration = 0;
-    const weights: Array<number> = [];
-    for (let i = 0; i < network1.weights.length; i++) {
-      weights.push(0);
+    const histories = trainingHistory(
+      this.props.network,
+      this.props.data,
+      this.state.r,
+    );
+    let historyIndex = this?.state?.historyIndex || 0;
+    if (historyIndex + 1 > histories.length) {
+      historyIndex = histories.length - 1;
     }
-    const history: Array<{
-      iteration: number;
-      epoch: Epoch;
-      network: NetworkState;
-    }> = [];
-    while (error >= threshold && iteration < MAX_ITERATIONS) {
-      const epoch: Epoch = { steps: [] };
-      error = 0;
-      for (let i = 0; i < network1.weights.length; i++) {
-        weights[i] = 0;
-      }
-      for (const row of data) {
-        const step: Step = { dj: 0, yj: 0, ej: 0, deltas: [], row: [] };
-        const dj = row[row.length - 1] as 0 | 1;
-        const network2 = modifyInputs(row.slice(0, -1), network1);
-        const yj = heaviside(networkOutput(network2));
-        const ej = dj - yj;
-        error += Math.abs(ej);
-        for (let i = 0; i < network1.weights.length; i++) {
-          const xji = network2.inputs[i]!;
-          const delta = r * ej * xji.value;
-          weights[i] += delta;
-          step.deltas.push(delta);
-        }
-        step.row = row;
-        step.dj = dj;
-        step.yj = yj;
-        step.ej = ej;
-        epoch.steps.push(step);
-      }
-      // update network with new weights
-      network1 = {
-        ...network1,
-        weights: network1.weights.map((w, index) => ({
-          ...w,
-          value: w.value + weights[index]!,
-        })),
-      };
-      weightUpdates.push(network1.weights.map((w) => w.value));
-      history.push({
-        iteration,
-        epoch,
-        network: network1,
-      });
-      iteration++;
-    }
+    const history = histories[historyIndex];
+    const nextHistory = histories[historyIndex + 1];
     return (
-      <table>
-        <tbody>
-          {history.map((history) => {
-            return history.epoch.steps.map((step, index) => {
+      <div>
+        <h4 className="text-lg text-left mt-10">
+          Epoch {historyIndex + 1} (aka, one time updating the weights by going
+          through all the data).
+        </h4>
+        <RangeSlider
+          id={`epoch-slider`}
+          min={0}
+          max={histories.length - 1}
+          step="1"
+          value={historyIndex}
+          onChange={(e) => {
+            this.setState({ historyIndex: Number(e.target.value) });
+          }}
+        />
+        <div>
+          The current weight values{" "}
+          {history &&
+            history.network.weights.map((w, i) => {
               return (
-                <tr key={index}>
-                  <td>{step.row[0]}</td>
-                  <td>{step.row[1]}</td>
-                </tr>
+                <React.Fragment key={i}>
+                  <WeightPill>W{subscript(i + 1)}</WeightPill> ={" "}
+                  {round(w.value)}{" "}
+                </React.Fragment>
               );
-            });
-          })}
-        </tbody>
-      </table>
+            })}
+        </div>
+        <table className="mx-auto w-full">
+          <tbody>
+            <tr>
+              <td>
+                <InputPill>X{subscript(1)}</InputPill>
+              </td>
+              <td>
+                <InputPill>X{subscript(2)}</InputPill>
+              </td>
+              <td>
+                <b>Target (T)</b>
+              </td>
+              <td>
+                <b>Predicted (P)</b>
+              </td>
+              <td>
+                <b>Error (T - P)</b>
+              </td>
+              <td>
+                <WeightPill>W{subscript(1)}Δ</WeightPill>
+              </td>
+              <td>
+                <WeightPill>W{subscript(2)}Δ</WeightPill>
+              </td>
+              <td>
+                <WeightPill>W{subscript(3)}Δ</WeightPill>
+              </td>
+            </tr>
+            {history &&
+              history.epoch.steps.map((step, index) => {
+                return (
+                  <tr key={index}>
+                    {step.row.map((data, index) => (
+                      <td key={index}>
+                        {index + 1 < step.row.length ? (
+                          <InputPill>{data}</InputPill>
+                        ) : (
+                          <HOutPill value={data as 0 | 1} />
+                        )}
+                      </td>
+                    ))}
+                    <td>{<HOutPill value={step.yj as 0 | 1} />}</td>
+                    <td>{step.ej}</td>
+                    {step.deltas.map((data, index) => (
+                      <td key={index}>{data}</td>
+                    ))}
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+        <div>
+          {nextHistory ? (
+            <>
+              <p>
+                After this epoch, the new weight values will be{" "}
+                {nextHistory.network.weights.map((w, i) => {
+                  return (
+                    <React.Fragment key={i}>
+                      <WeightPill>W{subscript(i + 1)}</WeightPill> ={" "}
+                      {round(w.value)}{" "}
+                    </React.Fragment>
+                  );
+                })}
+              </p>
+            </>
+          ) : (
+            <p>No weights were changed. We're done!</p>
+          )}
+        </div>
+        <p className="text-left">Learning rate: {this.state.r}</p>
+        <RangeSlider
+          id={`learning-rate`}
+          min={0.1}
+          max={0.9}
+          step="0.1"
+          value={this.state.r}
+          onChange={(e) => {
+            this.setState({ r: Number(e.target.value) });
+          }}
+        />
+        {history && (
+          <svg viewBox="0 0 300 130">
+            <g transform="translate(100,10)">
+              <ClassificationPlot
+                width={100}
+                height={100}
+                network={history.network}
+              />
+            </g>
+          </svg>
+        )}
+      </div>
     );
   }
 }
