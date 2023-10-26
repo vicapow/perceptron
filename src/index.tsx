@@ -31,6 +31,7 @@ import IrisSetosaData from "./IrisSetosaData";
 import { AppState, NetworkName } from "./AppState";
 import PerceptronRiv from "./perceptron.riv";
 import SizeContainer from "./SizeContainer";
+import { pad } from "./format";
 
 type AppStateAndNetwork = {
   appState: AppState;
@@ -52,10 +53,6 @@ function arraysEqual<T>(
     }
   }
   return true;
-}
-
-function round(a: number) {
-  return Math.round(a * 100) / 100;
 }
 
 function Output() {
@@ -157,9 +154,20 @@ function SliderWithPillContainer(
 ) {
   return (
     <div className={"flex gap-2"}>
-      <div className={"flex-none w-20"}>{props.label}</div>
+      <div className={"flex-none w-24"}>{props.label}</div>
       {props.children}
     </div>
+  );
+}
+
+function Twitter({ profile }: { profile: string }) {
+  return (
+    <a
+      href={`https://twitter.com/${profile}`}
+      className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+    >
+      @{profile}
+    </a>
   );
 }
 
@@ -176,7 +184,7 @@ function InputSliderAndPill(
         >
           <InputPill>X{subscript(inputIndex + 1)}</InputPill> ={" "}
           <span className="text-sky-500">
-            {round(appState[networkName].inputs[inputIndex]!.value)}
+            {pad(appState[networkName].inputs[inputIndex]!.value)}
           </span>
         </label>
       }
@@ -205,7 +213,7 @@ function WeightSliderAndPill(
         >
           <WeightPill>W{subscript(weightIndex + 1)}</WeightPill> ={" "}
           <span className="text-amber-500">
-            {round(appState[networkName].weights[weightIndex]!.value)}
+            {pad(appState[networkName].weights[weightIndex]!.value)}
           </span>
         </label>
       }
@@ -321,23 +329,23 @@ function Example() {
             />
             <p className="mt-6 text-lg leading-8 text-gray-600">
               <InputPill>
-                {round(appState.notGateNetwork.inputs[0]!.value)}
+                {pad(appState.notGateNetwork.inputs[0]!.value)}
               </InputPill>
               {" × "}
               <WeightPill>
-                {round(appState.notGateNetwork.weights[0]!.value)}
+                {pad(appState.notGateNetwork.weights[0]!.value)}
               </WeightPill>
               {" + "}
               <InputPill>
-                {round(appState.notGateNetwork.inputs[1]!.value)}
+                {pad(appState.notGateNetwork.inputs[1]!.value)}
               </InputPill>
               {" × "}
               <WeightPill>
-                {round(appState.notGateNetwork.weights[1]!.value)}
+                {pad(appState.notGateNetwork.weights[1]!.value)}
               </WeightPill>
               {" = "}
               <OutputPill>
-                {round(networkOutput(appState.notGateNetwork))}
+                {pad(networkOutput(appState.notGateNetwork))}
               </OutputPill>
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
@@ -349,7 +357,7 @@ function Example() {
             <p className="mt-6 text-lg leading-8 text-gray-600">
               H({" "}
               <span className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-pink-500 text-pink-200 ring-2 ring-inset ring-pink-200">
-                {round(networkOutput(appState.notGateNetwork))}
+                {pad(networkOutput(appState.notGateNetwork))}
               </span>
               ) = <HOutPill value={notGateHOut} />
             </p>
@@ -458,31 +466,31 @@ function Example() {
             </div>
             <p className="mt-6 text-lg leading-8 text-gray-600">
               <InputPill>
-                {round(appState.orGateNetwork.inputs[0]!.value)}
+                {pad(appState.orGateNetwork.inputs[0]!.value)}
               </InputPill>
               {" × "}
               <WeightPill>
-                {round(appState.orGateNetwork.weights[0]!.value)}
+                {pad(appState.orGateNetwork.weights[0]!.value)}
               </WeightPill>
               {" + "}
               <InputPill>
-                {round(appState.orGateNetwork.inputs[1]!.value)}
+                {pad(appState.orGateNetwork.inputs[1]!.value)}
               </InputPill>
               {" × "}
               <WeightPill>
-                {round(appState.orGateNetwork.weights[1]!.value)}
+                {pad(appState.orGateNetwork.weights[1]!.value)}
               </WeightPill>
               {" + "}
               <InputPill>
-                {round(appState.orGateNetwork.inputs[2]!.value)}
+                {pad(appState.orGateNetwork.inputs[2]!.value)}
               </InputPill>
               {" × "}
               <WeightPill>
-                {round(appState.orGateNetwork.weights[2]!.value)}
+                {pad(appState.orGateNetwork.weights[2]!.value)}
               </WeightPill>
               {" = "}
               <OutputPill>
-                {round(networkOutput(appState.orGateNetwork))}
+                {pad(networkOutput(appState.orGateNetwork))}
               </OutputPill>
             </p>
             <div className="mt-6">
@@ -642,6 +650,11 @@ function Example() {
               >
                 setosa.io
               </a>
+            </div>
+            <div>
+              Thanks to <Twitter profile="lewislehe" />,{" "}
+              <Twitter profile="yogurtandjam" />, <Twitter profile="lxe" /> for
+              reviewing earlier versions of this article.
             </div>
           </div>
         </div>

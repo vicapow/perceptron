@@ -8,6 +8,7 @@ import { InputPill, HOutPill, WeightPill } from "./Pill";
 import { RangeSlider } from "flowbite-react";
 import IrisSetosaData from "./IrisSetosaData";
 import { AppState, NetworkName } from "./AppState";
+import { pad } from "./format";
 
 export type Input = {
   readonly value: number;
@@ -98,10 +99,6 @@ export const OR_GATE_DATA = [
   [1, 0, 1],
   [1, 1, 1],
 ];
-
-function round(a: number) {
-  return Math.round(a * 100) / 100;
-}
 
 function setWeights(network: NetworkState, value: number): NetworkState {
   let weights: Array<Weight> = [];
@@ -288,7 +285,7 @@ export function Perceptron({
             r={r}
             minValue={minValue || 0}
             maxValue={maxValue || 1}
-            fontSize={r * 0.9}
+            fontSize={r * 0.8}
             className="fill-sky-100 stroke-sky-500"
             textClassName="fill-sky-300"
             key={index}
@@ -311,7 +308,7 @@ export function Perceptron({
             r={rInputs}
             minValue={-100}
             maxValue={100}
-            fontSize={rInputs * 0.9}
+            fontSize={rInputs * 0.8}
             className="fill-amber-200 stroke-amber-400"
             textClassName="fill-amber-400"
             key={index}
@@ -363,7 +360,7 @@ export function Perceptron({
               style={{ pointerEvents: "none", userSelect: "none" }}
               textAnchor="middle"
             >
-              {round(outputValue)}
+              {pad(outputValue)}
             </text>
           </g>
         );
@@ -666,8 +663,7 @@ export class ComputedWeights extends React.PureComponent<
             history.network.weights.map((w, i) => {
               return (
                 <React.Fragment key={i}>
-                  <WeightPill>W{subscript(i + 1)}</WeightPill> ={" "}
-                  {round(w.value)}{" "}
+                  <WeightPill>W{subscript(i + 1)}</WeightPill> = {pad(w.value)}{" "}
                 </React.Fragment>
               );
             })}
@@ -720,7 +716,7 @@ export class ComputedWeights extends React.PureComponent<
                       <td>{<HOutPill value={step.yj as 0 | 1} />}</td>
                       <td>{step.ej}</td>
                       {step.deltas.map((data, index) => (
-                        <td key={index}>{round(data)}</td>
+                        <td key={index}>{pad(data)}</td>
                       ))}
                     </tr>
                   );
@@ -737,7 +733,7 @@ export class ComputedWeights extends React.PureComponent<
                   return (
                     <React.Fragment key={i}>
                       <WeightPill>W{subscript(i + 1)}</WeightPill> ={" "}
-                      {round(w.value)}{" "}
+                      {pad(w.value)}{" "}
                     </React.Fragment>
                   );
                 })}
@@ -758,19 +754,6 @@ export class ComputedWeights extends React.PureComponent<
             this.setState({ r: Number(e.target.value) });
           }}
         />
-        {/* {history && (
-          <svg viewBox="0 0 300 130">
-            <g transform="translate(100,10)">
-              <ClassificationPlot
-                xIndex={0}
-                yIndex={1}
-                width={100}
-                height={100}
-                network={history.network}
-              />
-            </g>
-          </svg>
-        )} */}
       </div>
     );
   }

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Point } from "./bezier";
+import { pad } from "./format";
 
 export function EditableNode({
   value,
@@ -7,7 +8,7 @@ export function EditableNode({
   minValue,
   maxValue,
   onChange,
-  fontSize = 24,
+  fontSize,
   cx,
   cy,
   r,
@@ -21,7 +22,7 @@ export function EditableNode({
   minValue: number;
   maxValue: number;
   onChange: (details: { value: number }) => void;
-  fontSize?: number;
+  fontSize: number;
   radius?: number;
   cx: number;
   cy: number;
@@ -187,7 +188,7 @@ export function EditableNode({
         }}
         textAnchor="middle"
       >
-        {Math.round(value * 100) / 100}
+        {pad(value)}
       </text>
       {label && (
         <text
