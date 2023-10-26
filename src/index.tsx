@@ -32,6 +32,7 @@ import { AppState, NetworkName } from "./AppState";
 import PerceptronRiv from "./perceptron.riv";
 import SizeContainer from "./SizeContainer";
 import { pad } from "./format";
+import TwitterProfile from "./TwitterProfile";
 
 type AppStateAndNetwork = {
   appState: AppState;
@@ -171,6 +172,17 @@ function Twitter({ profile }: { profile: string }) {
   );
 }
 
+function Github({ profile }: { profile: string }) {
+  return (
+    <a
+      href={`https://github.com/${profile}`}
+      className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+    >
+      @{profile}
+    </a>
+  );
+}
+
 function InputSliderAndPill(
   props: AppStateAndNetwork & { inputIndex: number },
 ) {
@@ -267,15 +279,12 @@ function Example() {
           )}
         </SizeContainer>
         <div className="mx-5 sm:text-center m-5">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="sm:text-6xl font-bold tracking-tight text-gray-900 text-4xl">
             The Perceptron
-          </h2>
+          </h1>
           <h3>
-            <a
-              className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-              href="https://twitter.com/vicapow"
-            >
-              By Victor Powell
+            <a href="https://twitter.com/vicapow">
+              <TwitterProfile />
             </a>
             <a
               className="twitter-share-button"
@@ -653,8 +662,9 @@ function Example() {
             </div>
             <div>
               Thanks to <Twitter profile="lewislehe" />,{" "}
-              <Twitter profile="yogurtandjam" />, <Twitter profile="lxe" /> for
-              reviewing earlier versions of this article.
+              <Twitter profile="yogurtandjam" />, <Twitter profile="lxe" />, and{" "}
+              <Github profile="apguan" /> for reviewing earlier versions of this
+              article.
             </div>
           </div>
         </div>
